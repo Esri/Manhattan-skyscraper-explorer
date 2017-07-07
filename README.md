@@ -18,7 +18,7 @@ The following external libraries, APIs and open datasets were used in the making
 
 ## Disclaimer
 
-This demo application is non-commercial and it is not maintained. There is no support available for deployment or development of the application.
+This demo application is for illustrative purposes only and it is not maintained. There is no support available for deployment or development of the application.
 
 ## Contributing
 
