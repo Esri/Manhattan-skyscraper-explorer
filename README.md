@@ -6,6 +6,23 @@ This is a non-commercial, demo application made at the Esri R&D Center Zurich fo
 
 [View it live](https://esri.github.io/Manhattan-skyscraper-explorer/)
 
+## Features
+
+* Data driven visualization of buildings in Manhattan
+* Highlighting of selected buildings
+* Display information from different sources for selected building.
+* Different visualization options for point features: callout lines, relative to scene elevation mode, decluttering.
+
+## Instructions
+
+1. Fork and then clone the repo.
+2. Run and try the samples.
+
+## Requirements
+
+* Notepad or your favorite HTML editor
+* Web browser with access to the Internet
+
 ## Resources
 The following external libraries, APIs and open datasets were used in the making of this application:</p>
 
