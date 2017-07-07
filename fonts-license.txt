@@ -1,0 +1,6 @@
+The bootstrap fonts are licensed specifically for Esri Inc. and cannot be reused or distributed by any third party that is not in possession of a proper license (e.g., EULA).
+
+References for purchasing licenses:
+
+https://www.myfonts.com/fonts/linotype/avenir/licensing.html
+https://www.fonts.com/font/linotype/avenir/licenses

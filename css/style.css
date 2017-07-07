@@ -1,0 +1,349 @@
+/*  Copyright 2017 Esri
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+
+   you may not use this file except in compliance with the License.
+
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+
+   distributed under the License is distributed on an "AS IS" BASIS,
+
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+   See the License for the specific language governing permissions and
+
+   limitations under the License.*/
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: "Avenir Next W00","Helvetica Neue",Helvetica,Arial,sans-serif;;
+}
+
+body {
+  width: 100%;
+  min-width: 1400px;
+}
+
+#headerDiv {
+  position: absolute;
+  font-size: 1.8em;
+  padding: 5px 20px;
+  font-weight: bold;
+}
+
+.headerSub {
+  font-weight: normal;
+}
+
+#viewDiv {
+  position: absolute;
+  top: 0;
+  bottom: 250px;
+  width: 100%;
+  min-width: 1400px;
+}
+
+#timeWrap {
+  margin: 0 5px;
+}
+
+#menuDiv {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 250px;
+  min-width: 1400px;
+  background-color: rgba(255,255,255,1);
+  box-shadow: 1px 1px 5px 0 rgba(100,100,100,0.75);
+}
+
+#heightDiv {
+  height: 200px;
+  width: 1250px;
+  margin: 0 5px;
+  transform-origin: left;
+}
+
+#timeDiv {
+  padding-left: 95px;
+  transform-origin: left;
+}
+
+svg {
+  overflow: hidden;
+}
+
+button {
+  font-family: "Avenir Next W00","Helvetica Neue";
+  position: relative;
+  display: inline-block;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-transition: all 0.05s linear;
+  transition: all 0.05s linear;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 1rem;
+  line-height: 1.65rem;
+  text-align: center;
+  outline: none;
+  border: none;
+  border-radius: 5px;
+}
+
+#timeDiv button {
+  width: 225px;
+  margin-bottom: 10px;
+  margin-left: 5px;
+  margin-right: 3px;
+}
+
+#logo {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 120px;
+}
+
+#logo img {
+  height: 40px;
+  display: block;
+}
+
+#logo a {
+  font-size: 0.6em;
+  text-align: right;
+  color: rgb(0, 0, 0);
+  text-decoration: none;
+}
+
+#categoryDiv {
+  position: absolute;
+  left: 1300px;
+  top: 10px;
+}
+
+#categoryDiv button {
+  background-color: white;
+  display: block;
+  margin-top: 10px;
+  padding: 5px 12px;
+  width: 210px;
+  color: rgb(130, 130, 130);
+  border: 1px solid rgb(150, 150, 150);
+}
+
+#categoryDiv button.selected {
+  background-color: rgb(230, 230, 230);
+  color: rgb(0, 0, 0);
+  border: 1px solid rgb(255, 255, 255);
+}
+
+#categoryDiv button:hover {
+  background-color: rgb(230, 230, 230);
+  color: rgb(0, 0, 0);
+  border: 1px solid rgb(255, 255, 255);
+}
+
+.circle:hover{
+  cursor: pointer;
+}
+
+.tooltip {
+  font-size: 0.7em;
+  font-weight: bold;
+  font-family: "Avenir Next W00","Helvetica Neue";
+}
+
+rect.selection {
+  fill: rgba(150, 150, 150, 0.5);
+  stroke: rgba(150, 150, 150, 0);
+}
+
+rect.handle--n, rect.handle--s {
+  fill: #bbb;
+  stroke: #bbb;
+  height: 2px !important;
+}
+
+.wikiImage{
+  max-width: 300px;
+  max-height: 100px;
+  float: left;
+}
+
+#tooltip img {
+  height: 250px;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.esri-popup__main-container{
+  max-width: 600px;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hide;
+}
+
+.esri-popup__main-container h3 {
+  margin-top: -5px;
+  font-weight: normal;
+  font-size: 1.6rem;
+}
+
+.esri-popup__main-container p {
+  margin-top: 2px;
+}
+
+.esri-popup__content {
+  overflow: hidden;
+}
+
+.esri-popup__content p {
+  font-size: 0.8rem;
+}
+
+.esri-popup__header {
+  height: 20px;
+}
+
+a#link-flickr {
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+p.info {
+  font-size: 1rem;
+}
+
+.info img {
+  vertical-align: text-bottom;
+  height: 25px;
+}
+
+.info img:nth-child(2){
+  margin-left: 20px;
+}
+
+.esri-attribution__sources {
+  font-size: 0.7em;
+}
+
+a {
+  cursor: pointer;
+}
+
+.esri-attribution.esri-component {
+  z-index: 1;
+  opacity: 0.6;
+  background-color: rgba(255, 255, 255, 0);
+}
+
+#upper-indicator, #lower-indicator {
+  font-size: 0.7em;
+}
+
+.tick text {
+  font-size: 1.3em;
+}
+
+.galleria {
+  max-width: 430px;
+  height: 600px;
+  background: #fff;
+}
+
+.galleria-container.galleria-theme-classic {
+  background-color: #fff !important;
+}
+.galleria-theme-classic.notouch .galleria-thumb-nav-left:hover, .galleria-theme-classic.notouch .galleria-thumb-nav-right:hover {
+  background-color: #fff !important;
+}
+
+.esri-search.esri-component {
+  margin-top: -50px;
+  width: 460px;
+}
+
+.esri-popup__main-container {
+  z-index: 100;
+  border-top: solid 1px rgba(50,50,50,0.25);
+}
+
+#loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.6);
+  display: none;
+}
+
+#loadingInfo {
+  margin-top: 20%;
+}
+#loadingImage {
+  height: 40px;
+}
+
+path.domain, .tick line {
+  stroke: #fff;
+}
+
+.esri-attribution__powered-by {
+  display: none;
+}
+
+#impressumContainer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  width: 600px;
+  margin: 50px auto 0 auto;
+  background-color: #fff;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 10000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  display: none;
+}
+
+#impressumContainer .esri-icon-close {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  cursor: pointer;
+}
+
+#impressumContainer li {
+  padding: 10px;
+}
+
+#impressumContainer a, #logo a, #impressumLink a{
+  font-weight: bold;
+  color: inherit;
+  text-decoration: none;
+}
+
+#impressumLink {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  font-size: 0.7em;
+}
+
+
+
