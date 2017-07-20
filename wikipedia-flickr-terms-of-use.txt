@@ -1,0 +1,9 @@
+- Wikipedia API / MediaWiki (https://www.mediawiki.org/wiki/API:Main_page) is used
+to retrieve a small description of the building.
+All retrieved pages are under Creative Commons Attribution-ShareAlike License.
+See https://wikimediafoundation.org/wiki/Terms_of_Use for details.
+
+- This application uses Flickr API (https://www.flickr.com/services/api/)
+but is not endorsed or certified by Flickr. Flickr API is used to retrieve building
+images under Creative Commons licenses.
+See Flickr Terms of Use (https://www.flickr.com/services/api/tos/) for licensing information.
