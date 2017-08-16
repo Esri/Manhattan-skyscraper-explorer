@@ -24,9 +24,10 @@ This is a non-commercial, demo application made at the Esri R&D Center Zurich fo
 * Web browser with access to the Internet
 
 ## Resources
-The following external libraries, APIs and open datasets were used in the making of this application:</p>
+The following external libraries, APIs, open datasets and specifications were used to make this application:</p>
 
-* <a href="https://d3js.org/" target="_blank">D3js</a> for the timeline. D3js is shared under a <a href="https://github.com/d3/d3/blob/master/LICENSE" target="blank">BSD 3 clause license</a>.
+* Scene Layer: [Service and Package Standard](https://github.com/Esri/i3s-spec)
+* <a href="https://d3js.org/" target="_blank">D3.js</a> for the timeline. D3.js is shared under a <a href="https://github.com/d3/d3/blob/master/LICENSE" target="blank">BSD 3 clause license</a>.
 * <a href="https://www.mediawiki.org/wiki/API:Main_page" target="_blank">Wikipedia API / MediaWiki</a> is used to retrieve a small description of the building. All retrieved pages are under the <a href="https://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License" target="_blank">Creative Commons Attribution-ShareAlike License</a>. See <a href="https://wikimediafoundation.org/wiki/Terms_of_Use" target="_blank">Wikipedia Terms of Use</a> for details.
 * This application uses the <a href="https://www.flickr.com/services/api/" target="_blank">Flickr API</a> but is not endorsed or certified by <a href="https://www.flickr.com/" target="_blank">Flickr</a>. Flickr API is used to retrieve building images under <a href="https://creativecommons.org/licenses/" target="_blank">Creative Commons licenses</a>. See <a href="https://www.flickr.com/services/api/tos/" target="_blank">Flickr Terms of Use</a> for licensing information.
 * <a href="https://galleria.io/downloads/classic/" target="_blank">Galleria classic theme</a> and <a href="https://jquery.com/" target="_blank">JQuery</a> for the image gallery. Both libraries are under <a href="https://opensource.org/licenses/MIT" target="_blank">MIT license</a>.
