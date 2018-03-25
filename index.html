@@ -23,30 +23,31 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <title>Manhattan Skyscraper Explorer</title>
 
-  <link rel="stylesheet" href="https://jsdev.arcgis.com/4.4/esri/css/main.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
   <link rel="stylesheet" href="css/style.css">
 
   <!-- Load AMD modules: the application itself and D3  -->
   <script>
+    var locationPath = location.pathname.replace(/\/[^\/]+$/, "");
     var dojoConfig = {
       packages: [{
         name: "d3",
-        location: location.pathname.replace(/\/[^/]+$/, "") + "/lib",
+        location: locationPath + "/lib",
         main: "d3"
       }, {
         name: "app",
-        location: location.pathname.replace(/\/[^/]+$/, "") + "/app"
+        location: locationPath + "/app"
       }],
       async: true
     };
   </script>
 
-  <!-- ArcGIS JavaScript API 4.4  -->
-  <script src="https://js.arcgis.com/4.4/"></script>
+  <!-- ArcGIS JavaScript API 4.7  -->
+  <script src="https://js.arcgis.com/4.7/"></script>
 
   <!-- load Galleria and JQuery for the image gallery -->
   <script src="./lib/jquery.js"></script>
