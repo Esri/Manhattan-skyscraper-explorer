@@ -110,7 +110,7 @@ define([
         },
         constraints: {
           tilt: {
-            max: 70,
+            max: 90,
             mode: "manual"
           }
         },
