@@ -57,6 +57,11 @@ define([
             symbolLayers: [ new FillSymbol3DLayer({
               material: {
                 color: color
+              },
+              edges: {
+                type: "solid",
+                size: 1.2,
+                color: [0, 0, 0, 0.6]
               }
             })]
           })
