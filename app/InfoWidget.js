@@ -55,11 +55,11 @@ define([
 
       // set the building name, height and construction year from the building attributes
       var name = (attributes.name === " ") ? "Building" : attributes.name;
-      view.popup.content = "<h3>" + name  + "</h3>"
-      + "<p class='info'> <img src='./img/height.png'> " + Math.round(attributes.heightroof) + " feet"
-      + "<img src='./img/construction.png'> " + attributes.cnstrct_yr + "</p>";
-
-      view.popup.open();
+      view.popup.open({
+        content: "<h3>" + name  + "</h3>"
+        + "<p class='info'> <img src='./img/height.png'> " + Math.round(attributes.heightroof) + " feet"
+        + "<img src='./img/construction.png'> " + attributes.cnstrct_yr + "</p>"
+      });
 
       if (name !== "Building") {
         getWikiInfo().then(getFlickrPhotos);
@@ -114,18 +114,20 @@ define([
             }
             if (noPhotos > 0) {
               var gallery = "<div class='galleria'>";
+              console.log(noPhotos);
               for (var i = 0; i < noPhotos; i++) {
                 var photo = photos[i];
-                var url = "https://farm" + photo.getAttribute("farm") + ".staticflickr.com/" + photo.getAttribute("server") + "/" + photo.getAttribute("id") + "_" + photo.getAttribute("secret") + ".jpg";
-                var link = "&apos;https://www.flickr.com/photos/" + photo.getAttribute("owner") + "/" + photo.getAttribute("id") + "/&apos;"
-                var titleText = "'<a href=" + link + " target = &apos;_blank&apos;> Image: <b>" + photo.getAttribute("title") + "</b> courtesy of Flickr</a>'";
-                var image = "<a target='_blank' href='" + url + "'><img data-title =" + titleText + " src='" + url + "'></a>";
+                var url = `https://farm${photo.getAttribute("farm")}.staticflickr.com/${photo.getAttribute("server")}/${photo.getAttribute("id")}_${photo.getAttribute("secret")}.jpg`;
+                var link = `https://www.flickr.com/photos/${photo.getAttribute("owner")}/${photo.getAttribute("id")}/`;
+                var titleText = `<a href="${link}" target = "_blank"> Image: <b>${photo.getAttribute("title")}</b> courtesy of Flickr</a>`;
+                var image = `<a target="_blank" href="${url}"><img data-title ='${titleText}' src="${url}"></a>`;
                 gallery += image;
               }
               view.popup.content += gallery + "</div>" +
               "<a id='link-flickr' href='https://www.flickr.com/search/?tags=building&accuracy=16" +
               "&has_geo=true&lat=" + position.latitude + "&lon=" + position.longitude + "&radius=0.1" +
               "' target = '_blank'>See more images on Flickr</a>";
+              console.log(view.popup)
               Galleria.loadTheme(location.pathname.replace(/\/[^/]+$/, "") + "/lib/galleria/themes/classic/galleria.classic.js");
               Galleria.run(".galleria");
             }
