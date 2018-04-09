@@ -58,11 +58,11 @@ define([
               material: {
                 color: color
               },
-              edges: {
+              /* edges: {
                 type: "solid",
                 size: 1.2,
                 color: [0, 0, 0, 0.6]
-              }
+              } */
             })]
           })
         };
