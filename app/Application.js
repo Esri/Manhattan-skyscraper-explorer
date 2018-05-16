@@ -153,7 +153,7 @@ define([
 
       // feature layer with centroids of buildings - displayed on top of buildings to show which buildings contain information from wikipedia
       var infoPoints = new FeatureLayer({
-        url: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/ArcGIS/rest/services/Centroids_Manhattan_Information/FeatureServer/0",
+        url: settings.infoPointsUrl,
         popupEnabled: false,
         // relative to scene displays icons on top of buildings
         elevationInfo: {
