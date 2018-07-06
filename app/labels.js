@@ -88,8 +88,9 @@ define([
               symbol: new LabelSymbol3D({
                 symbolLayers: [
                   new TextSymbol3DLayer({
-                    color: settings.color || "white",
-                    backgroundColor: "white", // not working
+                    material: {
+                      color: settings.color || "white",
+                    },
                     text: feat.properties.Name,
                     font: {
                       family: "sans-serif",

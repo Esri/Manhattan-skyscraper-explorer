@@ -125,7 +125,7 @@ define([
         },
         environment: {
           lighting: {
-            ambientOcclusionEnabled: false,
+            ambientOcclusionEnabled: true,
             directShadowsEnabled: false
           }
         }
@@ -172,7 +172,7 @@ define([
       map.addMany([sceneLayer, infoPoints]);
 
       // add labels to display Manhattan boroughs
-      labels.initialize("./data/manhattan-boroughs.json", "name", { color: "#000" }, map);
+      labels.initialize("./data/manhattan-boroughs.json", "name", { color: "#fff" }, map);
 
       // initialize info widget
       var infoWidget = new InfoWidget(view, state);

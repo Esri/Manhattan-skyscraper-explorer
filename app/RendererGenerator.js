@@ -58,11 +58,11 @@ define([
               material: {
                 color: color
               },
-              /* edges: {
+              edges: {
                 type: "solid",
                 size: 1.2,
-                color: [0, 0, 0, 0.6]
-              } */
+                color: [50, 50, 50, 0.2]
+              }
             })]
           })
         };
@@ -103,7 +103,7 @@ define([
           field: field,
           stops: [{
             value: 0,
-            opacity: 0.2
+            opacity: 0.1
           }, {
             value: 1,
             opacity: 1
