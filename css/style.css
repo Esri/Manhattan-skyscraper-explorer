@@ -136,7 +136,7 @@ button {
   display: block;
   margin-top: 10px;
   padding: 5px 12px;
-  width: 210px;
+  width: 300px;
   color: rgb(130, 130, 130);
   border: 1px solid rgb(150, 150, 150);
 }
@@ -196,7 +196,6 @@ rect.handle--n, rect.handle--s {
 }
 
 .esri-popup__main-container h3 {
-  margin-top: -5px;
   font-weight: normal;
   font-size: 1.6rem;
 }
