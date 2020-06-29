@@ -186,7 +186,7 @@ define([
       query.returnGeometry = true;
       infoPoints.queryFeatures(query)
         .then(initGraphics)
-        .otherwise(error);
+        .catch(error);
 
       // initGraphics method takes the results of the query and stores them in the buildings array
       function initGraphics(results) {
@@ -288,7 +288,7 @@ define([
             }
           });
         })
-        .otherwise(error);
+        .catch(error);
 
       state.watch("filteredBuildings", function(newFilter) {
         // generate a new definition expression based an the new filter

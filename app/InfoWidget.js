@@ -131,7 +131,7 @@ define([
               Galleria.loadTheme(location.pathname.replace(/\/[^/]+$/, "") + "/lib/galleria/themes/classic/galleria.classic.js");
               Galleria.run(".galleria");
             }
-          }).otherwise(function(err) {
+          }).catch(function(err) {
             console.log(err);
           });
       }
