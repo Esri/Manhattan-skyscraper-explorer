@@ -36,15 +36,9 @@ define([
 
   return declare(null, {
 
-    constructor: function(view, state) {
+    constructor: function(view) {
 
       this.view = view;
-
-      view.popup.watch("visible", function(newValue) {
-        if (!newValue) {
-          state.selectedBuilding = null;
-        }
-      });
 
       esriConfig.request.corsEnabledServers.push("https://en.wikipedia.org/", "https://api.flickr.com/");
     },
@@ -55,11 +49,10 @@ define([
 
       // set the building name, height and construction year from the building attributes
       var name = (attributes.name === " ") ? "Building" : attributes.name;
-      view.popup.open({
-        content: "<h3>" + name  + "</h3>"
+      view.popup.open({content: "<h3>" + name  + "</h3>"
         + "<p class='info'> <img src='./img/height.png'> " + Math.round(attributes.heightroof) + " feet"
-        + "<img src='./img/construction.png'> " + attributes.cnstrct_yr + "</p>"
-      });
+        + "<img src='./img/construction.png'> " + attributes.cnstrct_yr + "</p>"});
+
 
       if (name !== "Building") {
         getWikiInfo().then(getFlickrPhotos);
@@ -127,7 +120,6 @@ define([
               "<a id='link-flickr' href='https://www.flickr.com/search/?tags=building&accuracy=16" +
               "&has_geo=true&lat=" + position.latitude + "&lon=" + position.longitude + "&radius=0.1" +
               "' target = '_blank'>See more images on Flickr</a>";
-              console.log(view.popup)
               Galleria.loadTheme(location.pathname.replace(/\/[^/]+$/, "") + "/lib/galleria/themes/classic/galleria.classic.js");
               Galleria.run(".galleria");
             }
