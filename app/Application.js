@@ -239,8 +239,24 @@ define([
                   query.outFields = ["*"];
                   query.objectIds = [feature.attributes.objectid];
                   lv.queryExtent(query).then(function(result) {
-                    dom.byId("loading").style.display = "none";
-                    view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000, easing: "out-expo" });
+                    // the queryChain function will be run until the queryExtent function returns the 3D extent of the building
+                    function queryChain(result) {
+                      if (result.extent !== null) {
+                        dom.byId("loading").style.display = "none";
+                        view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000, easing: "out-expo" });
+                      }
+                      else {
+                        if (!result.firstTry) {
+                          dom.byId("loading").style.display = "inline";
+                        }
+                        lv.queryExtent(query).then(function(result) {
+                          window.setTimeout(function() {
+                            queryChain(result);
+                          }, 1000);
+                        });
+                      }
+                    }
+                    queryChain(result);
                   });
                 });
               }).catch(console.error);
