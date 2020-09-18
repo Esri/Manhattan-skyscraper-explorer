@@ -35,7 +35,7 @@ define([
       this.search = new Search({
         view: view,
         sources: [{
-          featureLayer: layer,
+          layer: layer,
           outFields: ["*"],
           autoNavigate: true,
           searchFields: [field],
@@ -48,7 +48,8 @@ define([
         maxResults: 10,
         popupOpenOnSelect: false,
         resultGraphicEnabled: false,
-        popUpEnabled: false
+        popUpEnabled: false,
+        includeDefaultSources: false
       });
 
       this.search.on("select-result", function(event) {

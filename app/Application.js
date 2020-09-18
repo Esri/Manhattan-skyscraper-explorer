@@ -29,6 +29,7 @@ define([
   "dojo/_base/declare",
 
   "esri/core/Accessor",
+  "esri/core/watchUtils",
 
   "esri/Map",
   "esri/views/SceneView",
@@ -47,7 +48,7 @@ define([
   "dojo/dom",
   "dojo/on",
   "dojo/query"
-], function(declare, Accessor,
+], function(declare, Accessor, watchUtils,
   Map, SceneView, SceneLayer, FeatureLayer, Query,
   RendererGenerator, HeightGraph, Timeline, InfoWidget, labels, searchWidget, categorySelection,
   dom, on, domQuery
@@ -121,7 +122,8 @@ define([
             buttonEnabled: false,
             breakpoint: false
           },
-          actions: []
+          actions: [],
+          autoOpenEnabled: false
         },
         environment: {
           lighting: {
@@ -186,7 +188,7 @@ define([
       query.returnGeometry = true;
       infoPoints.queryFeatures(query)
         .then(initGraphics)
-        .otherwise(error);
+        .catch(error);
 
       // initGraphics method takes the results of the query and stores them in the buildings array
       function initGraphics(results) {
@@ -212,83 +214,46 @@ define([
 
       view.whenLayerView(sceneLayer)
         .then(function(lv) {
-          state.watch("hoveredBuilding", function(newFeature) {
-            if (newFeature !== null) {
-              // highlight on hover in the height graph
-              heightGraph.hover(newFeature);
-              // highlight newFeature on the map
-              hoverHighlight = lv.highlight([newFeature.attributes.objectid]);
-            }
-            else {
-              // remove highlight in height graph and on the map
-              heightGraph.removeHover();
-              if (hoverHighlight) {
-                hoverHighlight.remove();
-              }
-            }
-          });
+          window.state = state;
 
           state.watch("selectedBuilding", function(feature) {
-
-            if (feature !== null) {
-              // remove highlight for selection in height graph and on the map
+            // remove highlight for selection in height graph and on the map
+            if (selectHighlight) {
               heightGraph.deselect();
-              if (selectHighlight) {
-                selectHighlight.remove();
-              }
-
+              selectHighlight.remove();
+              selectHightlight = null;
+              domQuery(".esri-component.esri-search.esri-widget")[0].style.display = "inline";
+            }
+            if (feature) {
               // highlight on hover in the height graph
               heightGraph.select(feature);
-
               // highlight feature on the map
               selectHighlight = lv.highlight([feature.attributes.objectid]);
-
               // zoom to the building in the map
-              view.goTo({ target: feature.geometry }, { duration: 1000, easing: "out-expo" });
+              view.goTo(feature.geometry, { duration: 1000, easing: "out-expo" })
+              .then(function() {
+                dom.byId("loading").style.display = "inline";
+                watchUtils.whenFalseOnce(lv, "updating", function() {
+                  // frame the 3D building
+                  var query = new Query();
+                  query.outFields = ["*"];
+                  query.objectIds = [feature.attributes.objectid];
+                  lv.queryExtent(query).then(function(result) {
+                    dom.byId("loading").style.display = "none";
+                    view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000, easing: "out-expo" });
+                  });
+                });
+              }).catch(console.error);
 
               // hide the search widget to show the popup
               domQuery(".esri-component.esri-search.esri-widget")[0].style.display = "none";
               // display information about the building in the popup
               infoWidget.setContent(feature.geometry, feature.attributes);
 
-              // frame the 3D building
-              var query = new Query();
-              query.outFields = ["*"];
-              query.objectIds = [feature.attributes.objectid];
-              var result = {
-                extent: null,
-                firstTry: true
-              };
-              // the queryChain function will be run until the queryExtent function returns the 3D extent of the building
-              function queryChain(result) {
-                if (result.extent !== null) {
-                  dom.byId("loading").style.display = "none";
-                  view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000, easing: "out-expo" });
-                }
-                else {
-                  if (!result.firstTry) {
-                    dom.byId("loading").style.display = "inline";
-                  }
-                  lv.queryExtent(query).then(function(result) {
-                    window.setTimeout(function() {
-                      queryChain(result);
-                    }, 1000);
-                  });
-                }
-              }
-              queryChain(result);
-            }
-            else {
-              // remove highlights and display the search widget
-              heightGraph.deselect();
-              if (selectHighlight) {
-                selectHighlight.remove();
-              }
-              domQuery(".esri-component.esri-search.esri-widget")[0].style.display = "inline";
             }
           });
         })
-        .otherwise(error);
+        .catch(console.error);
 
       state.watch("filteredBuildings", function(newFilter) {
         // generate a new definition expression based an the new filter
@@ -320,48 +285,10 @@ define([
           if (graphic && (graphic.layer.title === "Buildings Manhattan wiki")) {
             var feature = findFeature(graphic);
             if (feature) {
-              if (state.selectedBuilding == null) {
-                state.selectedBuilding = feature;
-              }
-              else {
-                if (state.selectedBuilding.attributes.objectid !== feature.attributes.objectid) {
-                  state.selectedBuilding = feature;
-                }
-              }
+              state.selectedBuilding = feature;
             }
           }
         });
-      });
-
-      // when user hovers on a building set it in the state in the hovered
-      var lastHover = Date.now();
-      view.on("pointer-move", function(evt) {
-        var newHover = Date.now();
-        if ((newHover - lastHover) > 20 && !view.interacting) {
-          lastHover = newHover;
-          view.hitTest({ x: evt.x, y: evt.y }).then(function(response) {
-            var graphic = response.results[0] ? response.results[0].graphic : null;
-            if (graphic && (graphic.layer.title === "Buildings Manhattan wiki")) {
-              var feature = findFeature(graphic);
-              var building = state.hoveredBuilding;
-              if (feature) {
-                if ((!building) || (feature.attributes.objectid !== building.attributes.objectid)) {
-                  heightGraph.removeHover();
-                  if (hoverHighlight) {
-                    hoverHighlight.remove();
-                  }
-                  state.hoveredBuilding = feature;
-                }
-              }
-              else {
-                state.hoveredBuilding = null;
-              }
-            }
-            else {
-              state.hoveredBuilding = null;
-            }
-          });
-        }
       });
 
       function findFeature(graphic) {

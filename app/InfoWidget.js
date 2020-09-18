@@ -30,13 +30,12 @@
 
 define([
   "dojo/_base/declare",
-  "esri/request",
-  "esri/config"
-], function(declare, esriRequest, esriConfig) {
+  "esri/request"
+], function(declare, esriRequest) {
 
   return declare(null, {
 
-    constructor: function(view, state) {
+    constructor: function(view) {
 
       this.view = view;
 
@@ -45,8 +44,6 @@ define([
           state.selectedBuilding = null;
         }
       });
-
-      esriConfig.request.corsEnabledServers.push("https://en.wikipedia.org/", "https://api.flickr.com/");
     },
 
     setContent: function(position, attributes) {
@@ -55,11 +52,12 @@ define([
 
       // set the building name, height and construction year from the building attributes
       var name = (attributes.name === " ") ? "Building" : attributes.name;
-      view.popup.open({
-        content: "<h3>" + name  + "</h3>"
-        + "<p class='info'> <img src='./img/height.png'> " + Math.round(attributes.heightroof) + " feet"
-        + "<img src='./img/construction.png'> " + attributes.cnstrct_yr + "</p>"
-      });
+      view.popup.open({content: `<h3> ${name} </h3>
+        <p class='info'>
+          <img src="https://raw.githubusercontent.com/Esri/Manhattan-skyscraper-explorer/master/img/height.png"> ${Math.round(attributes.heightroof)} feet
+          <img src='https://raw.githubusercontent.com/Esri/Manhattan-skyscraper-explorer/master/img/construction.png'> ${attributes.cnstrct_yr}
+        </p>`});
+
 
       if (name !== "Building") {
         getWikiInfo().then(getFlickrPhotos);
@@ -114,7 +112,6 @@ define([
             }
             if (noPhotos > 0) {
               var gallery = "<div class='galleria'>";
-              console.log(noPhotos);
               for (var i = 0; i < noPhotos; i++) {
                 var photo = photos[i];
                 var url = `https://farm${photo.getAttribute("farm")}.staticflickr.com/${photo.getAttribute("server")}/${photo.getAttribute("id")}_${photo.getAttribute("secret")}.jpg`;
@@ -127,11 +124,10 @@ define([
               "<a id='link-flickr' href='https://www.flickr.com/search/?tags=building&accuracy=16" +
               "&has_geo=true&lat=" + position.latitude + "&lon=" + position.longitude + "&radius=0.1" +
               "' target = '_blank'>See more images on Flickr</a>";
-              console.log(view.popup)
               Galleria.loadTheme(location.pathname.replace(/\/[^/]+$/, "") + "/lib/galleria/themes/classic/galleria.classic.js");
               Galleria.run(".galleria");
             }
-          }).otherwise(function(err) {
+          }).catch(function(err) {
             console.log(err);
           });
       }
