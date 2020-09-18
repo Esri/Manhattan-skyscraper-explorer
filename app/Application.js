@@ -214,22 +214,6 @@ define([
 
       view.whenLayerView(sceneLayer)
         .then(function(lv) {
-          state.watch("hoveredBuilding", function(newFeature) {
-            if (newFeature !== null) {
-              // highlight on hover in the height graph
-              heightGraph.hover(newFeature);
-              // highlight newFeature on the map
-              hoverHighlight = lv.highlight([newFeature.attributes.objectid]);
-            }
-            else {
-              // remove highlight in height graph and on the map
-              heightGraph.removeHover();
-              if (hoverHighlight) {
-                hoverHighlight.remove();
-              }
-            }
-          });
-
           window.state = state;
 
           state.watch("selectedBuilding", function(feature) {
@@ -305,37 +289,6 @@ define([
             }
           }
         });
-      });
-
-      // when user hovers on a building set it in the state in the hovered
-      var lastHover = Date.now();
-      view.on("pointer-move", function(evt) {
-        var newHover = Date.now();
-        if ((newHover - lastHover) > 20) {
-          lastHover = newHover;
-          view.hitTest({ x: evt.x, y: evt.y }).then(function(response) {
-            var graphic = response.results[0] ? response.results[0].graphic : null;
-            if (graphic && (graphic.layer.title === "Buildings Manhattan wiki")) {
-              var feature = findFeature(graphic);
-              var building = state.hoveredBuilding;
-              if (feature) {
-                if ((!building) || (feature.attributes.objectid !== building.attributes.objectid)) {
-                  heightGraph.removeHover();
-                  if (hoverHighlight) {
-                    hoverHighlight.remove();
-                  }
-                  state.hoveredBuilding = feature;
-                }
-              }
-              else {
-                state.hoveredBuilding = null;
-              }
-            }
-            else {
-              state.hoveredBuilding = null;
-            }
-          });
-        }
       });
 
       function findFeature(graphic) {

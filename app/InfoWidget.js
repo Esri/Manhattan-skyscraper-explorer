@@ -30,9 +30,8 @@
 
 define([
   "dojo/_base/declare",
-  "esri/request",
-  "esri/config"
-], function(declare, esriRequest, esriConfig) {
+  "esri/request"
+], function(declare, esriRequest) {
 
   return declare(null, {
 
@@ -40,7 +39,11 @@ define([
 
       this.view = view;
 
-      esriConfig.request.corsEnabledServers.push("https://en.wikipedia.org/", "https://api.flickr.com/");
+      view.popup.watch("visible", function(newValue) {
+        if (!newValue) {
+          state.selectedBuilding = null;
+        }
+      });
     },
 
     setContent: function(position, attributes) {
@@ -49,9 +52,11 @@ define([
 
       // set the building name, height and construction year from the building attributes
       var name = (attributes.name === " ") ? "Building" : attributes.name;
-      view.popup.open({content: "<h3>" + name  + "</h3>"
-        + "<p class='info'> <img src='./img/height.png'> " + Math.round(attributes.heightroof) + " feet"
-        + "<img src='./img/construction.png'> " + attributes.cnstrct_yr + "</p>"});
+      view.popup.open({content: `<h3> ${name} </h3>
+        <p class='info'>
+          <img src="https://raw.githubusercontent.com/Esri/Manhattan-skyscraper-explorer/master/img/height.png"> ${Math.round(attributes.heightroof)} feet
+          <img src='https://raw.githubusercontent.com/Esri/Manhattan-skyscraper-explorer/master/img/construction.png'> ${attributes.cnstrct_yr}
+        </p>`});
 
 
       if (name !== "Building") {
@@ -107,7 +112,6 @@ define([
             }
             if (noPhotos > 0) {
               var gallery = "<div class='galleria'>";
-              console.log(noPhotos);
               for (var i = 0; i < noPhotos; i++) {
                 var photo = photos[i];
                 var url = `https://farm${photo.getAttribute("farm")}.staticflickr.com/${photo.getAttribute("server")}/${photo.getAttribute("id")}_${photo.getAttribute("secret")}.jpg`;
