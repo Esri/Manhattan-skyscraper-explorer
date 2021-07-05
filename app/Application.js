@@ -297,7 +297,7 @@ define([
       // when user clicks on a building, set it as the selected building in the state
       view.on("click", function(event) {
         view.hitTest(event.screenPoint).then(function(response) {
-          var graphic = response.results[0].graphic;
+          var graphic = response.results.length > 0 ? response.results[0].graphic : null;
           if (graphic && (graphic.layer.title === "Buildings Manhattan wiki")) {
             var feature = findFeature(graphic);
             if (feature) {
