@@ -35,7 +35,7 @@ define([
   "esri/views/SceneView",
   "esri/layers/SceneLayer",
   "esri/layers/FeatureLayer",
-  "esri/tasks/support/Query",
+  "esri/rest/support/Query",
 
   "app/RendererGenerator",
   "app/HeightGraph",
