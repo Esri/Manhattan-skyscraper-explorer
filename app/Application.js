@@ -29,7 +29,7 @@ define([
   "dojo/_base/declare",
 
   "esri/core/Accessor",
-  "esri/core/watchUtils",
+  "esri/core/reactiveUtils",
 
   "esri/Map",
   "esri/views/SceneView",
@@ -48,7 +48,7 @@ define([
   "dojo/dom",
   "dojo/on",
   "dojo/query"
-], function(declare, Accessor, watchUtils,
+], function(declare, Accessor, reactiveUtils,
   Map, SceneView, SceneLayer, FeatureLayer, Query,
   RendererGenerator, HeightGraph, Timeline, InfoWidget, labels, searchWidget, categorySelection,
   dom, on, domQuery
@@ -88,7 +88,7 @@ define([
 
       // create map
       var map = new Map({
-        basemap: "gray",
+        basemap: "gray-vector",
         ground: "world-elevation"
       });
 
@@ -231,9 +231,9 @@ define([
               selectHighlight = lv.highlight([feature.attributes.objectid]);
               // zoom to the building in the map
               view.goTo(feature.geometry, { duration: 1000, easing: "out-expo" })
-              .then(function() {
+              .then(async function() {
                 dom.byId("loading").style.display = "inline";
-                watchUtils.whenFalseOnce(lv, "updating", function() {
+                await reactiveUtils.whenOnce(() => !lv.updating)
                   // frame the 3D building
                   var query = new Query();
                   query.outFields = ["*"];
@@ -259,8 +259,6 @@ define([
                     queryChain(result);
                   });
                 });
-              }).catch(console.error);
-
               // hide the search widget to show the popup
               domQuery(".esri-component.esri-search.esri-widget")[0].style.display = "none";
               // display information about the building in the popup

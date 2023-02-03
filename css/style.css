@@ -136,7 +136,7 @@ button {
   display: block;
   margin-top: 10px;
   padding: 5px 12px;
-  width: 300px;
+  width: 100%;
   color: rgb(130, 130, 130);
   border: 1px solid rgb(150, 150, 150);
 }

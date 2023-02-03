@@ -26,7 +26,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <title>Manhattan Skyscraper Explorer</title>
-  <link rel="stylesheet" href="https://js.arcgis.com/4.21/esri/css/main.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.26/esri/css/main.css">
   <link rel="stylesheet" href="css/style.css">
 
   <!-- Load AMD modules: the application itself and D3  -->
@@ -40,13 +40,16 @@
       }, {
         name: "app",
         location: locationPath + "/app"
+      }, {
+        name: "dojo",
+        location: "//ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/"
       }],
       async: true
     };
   </script>
 
-  <!-- ArcGIS JavaScript API 4.21  -->
-  <script src="https://js.arcgis.com/4.21/"></script>
+  <!-- ArcGIS JavaScript API 4.26  -->
+  <script src="https://js.arcgis.com/4.26/"></script>
 
   <!-- load Galleria and JQuery for the image gallery -->
   <script src="./lib/jquery.js"></script>
@@ -132,9 +135,8 @@
       <li><a href="https://www.mediawiki.org/wiki/API:Main_page" target="_blank">Wikipedia API / MediaWiki</a> is used to retrieve a small description of the building. All retrieved pages are under the <a href="https://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License" target="_blank">Creative Commons Attribution-ShareAlike License</a>. See <a href="https://wikimediafoundation.org/wiki/Terms_of_Use" target="_blank">Wikipedia Terms of Use</a> for details.</li>
       <li>This application uses the <a href="https://www.flickr.com/services/api/" target="_blank">Flickr API</a> but is not endorsed or certified by <a href="https://www.flickr.com/" target="_blank">Flickr</a>. Flickr API is used to retrieve building images under <a href="https://creativecommons.org/licenses/" target="_blank">Creative Commons licenses</a>. See <a href="https://www.flickr.com/services/api/tos/" target="_blank">Flickr Terms of Use</a> for licensing information.</li>
       <li><a href="https://galleria.io/downloads/classic/" target="_blank">Galleria classic theme</a> and <a href="https://jquery.com/" target="_blank">JQuery</a> for the image gallery. Both libraries are under <a href="https://opensource.org/licenses/MIT" target="_blank">MIT license</a>.</li>
-      <li><a href="http://www1.nyc.gov/site/doitt/initiatives/3d-building.page" target="_blank">3D building model</a> published on the Open Data portal of <a href="http://www1.nyc.gov/site/doitt/index.page" target="_blank">DoITT</a> under these <a href="http://www1.nyc.gov/home/terms-of-use.page" target="_blank">Terms of use</a>.</li>
-      <li><a href="https://data.cityofnewyork.us/Housing-Development/Building-Footprints/nqwf-w8eh" target="_blank"> New York Building footprints with housing information </a> provided by <a href="http://www1.nyc.gov/site/doitt/index.page" target="_blank">DoITT</a> and published on <a href="https://data.cityofnewyork.us/" target="_blank">NYC Open Data Portal</a>.</li>
-      <li><a href="http://catalog.opendata.city/dataset/pediacities-nyc-neighborhoods/resource/91778048-3c58-449c-a3f9-365ed203e914" target="_blank"> Manhattan neighborhoods </a> provided by <a href="http://catalog.opendata.city/" target="_blank">Catalog Opendata City</a> under a <a href="http://opendefinition.org/licenses/odc-by/" target="_blank">Open Data Commons Attribution License</a>.</li>
+      <li><a href="http://www1.nyc.gov/site/doitt/initiatives/3d-building.page" target="_blank">3D building model</a> published on the Open Data portal of <a href="https://www1.nyc.gov/content/oti/pages/" target="_blank">DoITT</a> under these <a href="http://www1.nyc.gov/home/terms-of-use.page" target="_blank">Terms of use</a>.</li>
+      <li><a href="https://data.cityofnewyork.us/Housing-Development/Building-Footprints/nqwf-w8eh" target="_blank"> New York Building footprints with housing information </a> provided by <a href="https://www1.nyc.gov/content/oti/pages/" target="_blank">DoITT</a> and published on <a href="https://data.cityofnewyork.us/" target="_blank">NYC Open Data Portal</a>.</li>
       </ul>
   </div>
   <div id="impressumLink"><a>Disclaimer</a></div>
