@@ -47,6 +47,8 @@ import settings from "./settings";
 import { State } from "./State";
 import { attributesToLowerCase, ignoreAbortErrors } from "./utils";
 
+import wikiImgUrl from "../img/wiki.png";
+
 const containers = { view: "viewDiv", timeline: "timeDiv", heightGraph: "heightDiv", categories: "categoryDiv" };
 
 const state = new State();
@@ -134,7 +136,7 @@ const infoPoints = new FeatureLayer({
   featureReduction: {
     type: "selection"
   },
-  renderer: rendererGen.createUniqueValueRenderer("WIKI", { value: 1, image: "./img/wiki.png" }),
+  renderer: rendererGen.createUniqueValueRenderer("WIKI", { value: 1, image: wikiImgUrl }),
   visible: false
 });
 
