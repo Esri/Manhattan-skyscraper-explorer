@@ -53,12 +53,11 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
   const name = attributes.name.trim() ? attributes.name : "Building";
   let content = `
 <p class='info'>
-  <img src="https://raw.githubusercontent.com/Esri/Manhattan-skyscraper-explorer/master/img/height.png"> ${Math.round(
+  <img src="./height.png"> ${Math.round(
     attributes.heightroof
   )} feet
-  <img src='https://raw.githubusercontent.com/Esri/Manhattan-skyscraper-explorer/master/img/construction.png'> ${
-    attributes.cnstrct_yr
-  }
+  <img src='./construction.png'> ${attributes.cnstrct_yr
+    }
 </p>`;
 
   let articleUrl = undefined;

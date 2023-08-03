@@ -134,7 +134,7 @@ const infoPoints = new FeatureLayer({
   featureReduction: {
     type: "selection"
   },
-  renderer: rendererGen.createUniqueValueRenderer("WIKI", { value: 1, image: "./img/wiki.png" }),
+  renderer: rendererGen.createUniqueValueRenderer("WIKI", { value: 1, image: "./wiki.png" }),
   visible: false
 });
 

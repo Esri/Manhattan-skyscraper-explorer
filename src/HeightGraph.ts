@@ -94,7 +94,7 @@ export default class HeightGraph {
     // add image of the building to better understand the vertical height axis
     svg
       .append("image")
-      .attr("xlink:href", "./img/world-trade-center.png")
+      .attr("xlink:href", "./world-trade-center.png")
       .attr("y", 30)
       .attr("x", 10)
       .attr("height", this.height - 43)
