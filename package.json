@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@arcgis/core": "^4.27.6",
-    "d3": "^4.4.0",
+    "d3": "^7.8.5",
     "swiper": "^10.0.3",
     "typescript": "^5.0.4",
     "vite": "^4.3.8"
