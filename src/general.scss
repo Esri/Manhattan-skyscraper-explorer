@@ -18,11 +18,13 @@
 
    limitations under the License.*/
 
+@import '@arcgis/core/assets/esri/themes/light/main.css';
+
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: "Avenir Next W00","Helvetica Neue",Helvetica,Arial,sans-serif;;
+  font-family: "Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif;;
 }
 
 body {
@@ -81,7 +83,7 @@ svg {
 }
 
 button {
-  font-family: "Avenir Next W00","Helvetica Neue";
+  font-family: "Avenir Next","Helvetica Neue";
   position: relative;
   display: inline-block;
   -webkit-box-sizing: border-box;
@@ -160,7 +162,7 @@ button {
 .tooltip {
   font-size: 0.7em;
   font-weight: bold;
-  font-family: "Avenir Next W00","Helvetica Neue";
+  font-family: "Avenir Next","Helvetica Neue";
 }
 
 rect.selection {
@@ -186,34 +188,6 @@ rect.handle--n, rect.handle--s {
 
 .pointer {
   cursor: pointer;
-}
-
-.esri-popup__main-container{
-  max-width: 600px;
-  height: 100% !important;
-  max-height: 100% !important;
-  overflow: hide;
-}
-
-.esri-popup__main-container h3 {
-  font-weight: normal;
-  font-size: 1.6rem;
-}
-
-.esri-popup__main-container p {
-  margin-top: 2px;
-}
-
-.esri-popup__content {
-  overflow: hidden;
-}
-
-.esri-popup__content p {
-  font-size: 0.8rem;
-}
-
-.esri-popup__header {
-  height: 20px;
 }
 
 a#link-flickr {
@@ -256,26 +230,42 @@ a {
   font-size: 1.3em;
 }
 
-.galleria {
-  max-width: 430px;
-  min-height: 250px;
-  background: #fff;
+.swiper {
+  width: 100%;
+  height: 260px;
 }
 
-.galleria-container.galleria-theme-classic {
-  background-color: #fff !important;
+.swiper-button-prev::after, .swiper-button-next::after {
+  text-shadow: -1px 0px 0px white, 1px 0px 0px white, 0px -1px 0px white, 0px 1px 0px white;
 }
-.galleria-theme-classic.notouch .galleria-thumb-nav-left:hover, .galleria-theme-classic.notouch .galleria-thumb-nav-right:hover {
-  background-color: #fff !important;
+
+.swiper-slide {
+  padding: 20px 40px;
+  box-sizing: border-box;
+
+  .attribution {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    overflow: hidden;
+    width: 100%;
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .image {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .esri-search.esri-component {
   width: 460px;
-}
-
-.esri-popup__main-container {
-  z-index: 100;
-  border-top: solid 1px rgba(50,50,50,0.25);
 }
 
 #loading {
@@ -342,6 +332,3 @@ path.domain, .tick line {
   bottom: 10px;
   font-size: 0.7em;
 }
-
-
-
