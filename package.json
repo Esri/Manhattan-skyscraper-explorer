@@ -22,7 +22,7 @@
     "vite": "^4.3.9"
   },
   "devDependencies": {
-    "@types/d3": "^4.4.0",
+    "@types/d3": "^7.4.0",
     "@typescript-eslint/eslint-plugin": "^5.42.0",
     "@typescript-eslint/parser": "^5.42.0",
     "eslint": "^8.26.0",

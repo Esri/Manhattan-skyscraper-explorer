@@ -173,7 +173,7 @@ export default class HeightGraph {
       .attr("cy", function (d) {
         return yScale(d.attributes.heightroof);
       })
-      .on("click", function (d) {
+      .on("click", function (_e, d) {
         state.selectedBuilding = d;
       });
 
@@ -189,23 +189,23 @@ export default class HeightGraph {
       .attr("id", "lower-indicator");
 
     // add event listeners when filters are changed
-    brush.on("brush", function () {
-      groupHandlers.select("rect.top").attr("y", d3.event.selection[0] - 9);
-      groupHandlers.select("rect.bottom").attr("y", d3.event.selection[1] - 1);
+    brush.on("brush", function (e) {
+      groupHandlers.select("rect.top").attr("y", e.selection[0] - 9);
+      groupHandlers.select("rect.bottom").attr("y", e.selection[1] - 1);
       svg
         .select("#upper-indicator")
-        .attr("y", d3.event.selection[0] - 5)
-        .text(Math.round(yScale.invert(d3.event.selection[0])));
+        .attr("y", e.selection[0] - 5)
+        .text(Math.round(yScale.invert(e.selection[0])));
       svg
         .select("#lower-indicator")
-        .attr("y", d3.event.selection[1] + 15)
-        .text(Math.round(yScale.invert(d3.event.selection[1])));
-      state.filteredBuildings = [yScale.invert(d3.event.selection[1]), yScale.invert(d3.event.selection[0])];
+        .attr("y", e.selection[1] + 15)
+        .text(Math.round(yScale.invert(e.selection[1])));
+      state.filteredBuildings = [yScale.invert(e.selection[1]), yScale.invert(e.selection[0])];
     });
-    brush.on("end", function () {
+    brush.on("end", function (e) {
       svg.select("#upper-indicator").text("");
       svg.select("#lower-indicator").text("");
-      if (!d3.event.selection) {
+      if (!e.selection) {
         yAxisGroup.call(brush).call(brush.move, [yScale(1500), yScale(0)]);
       }
     });
