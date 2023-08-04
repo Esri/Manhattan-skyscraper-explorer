@@ -26,6 +26,8 @@ import Graphic from "@arcgis/core/Graphic";
 import settings from "./settings";
 import { State } from "./State";
 
+import worldTradeCenterImgUrl from "../img/world-trade-center.png";
+
 /**
  * This class builds the graph that displays
  * the correlation between building height and
@@ -94,7 +96,7 @@ export default class HeightGraph {
     // add image of the building to better understand the vertical height axis
     svg
       .append("image")
-      .attr("xlink:href", "./img/world-trade-center.png")
+      .attr("xlink:href", worldTradeCenterImgUrl)
       .attr("y", 30)
       .attr("x", 10)
       .attr("height", this.height - 43)
