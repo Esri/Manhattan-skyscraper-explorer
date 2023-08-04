@@ -25,26 +25,26 @@
  * Description: Main application file where the UI and scene view are loaded
  */
 
-import { watch, when, whenOnce } from "@arcgis/core/core/reactiveUtils";
-import Map from "@arcgis/core/Map";
-import SceneView from "@arcgis/core/views/SceneView";
-import SceneLayer from "@arcgis/core/layers/SceneLayer";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import Query from "@arcgis/core/rest/support/Query";
-import { Extent, Point, SpatialReference } from "@arcgis/core/geometry";
 import Graphic from "@arcgis/core/Graphic";
+import Map from "@arcgis/core/Map";
+import { watch, when, whenOnce } from "@arcgis/core/core/reactiveUtils";
+import { Extent, Point, SpatialReference } from "@arcgis/core/geometry";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
+import Query from "@arcgis/core/rest/support/Query";
+import SceneView from "@arcgis/core/views/SceneView";
 import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
 
-import RendererGenerator from "./RendererGenerator";
-import * as labels from "./labels";
 import HeightGraph from "./HeightGraph";
-import Timeline from "./Timeline";
-import * as infoWidget from "./infoWidget";
-import * as searchWidget from "./searchWidget";
-import * as categorySelection from "./categorySelection";
-import settings from "./settings";
+import RendererGenerator from "./RendererGenerator";
 import { State } from "./State";
+import Timeline from "./Timeline";
+import * as categorySelection from "./categorySelection";
+import * as infoWidget from "./infoWidget";
+import * as labels from "./labels";
+import * as searchWidget from "./searchWidget";
+import settings from "./settings";
 import { attributesToLowerCase, ignoreAbortErrors } from "./utils";
 
 const containers = { view: "viewDiv", timeline: "timeDiv", heightGraph: "heightDiv", categories: "categoryDiv" };
