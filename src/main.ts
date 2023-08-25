@@ -58,7 +58,7 @@ let selectHighlight: IHandle | null = null;
 
 // create map
 const map = new Map({
-  basemap: "gray",
+  basemap: "gray-vector",
   ground: "world-elevation"
 });
 
@@ -98,7 +98,7 @@ const view = new SceneView({
   environment: {
     lighting: {
       ambientOcclusionEnabled: true,
-      directShadowsEnabled: false
+      directShadowsEnabled: true
     }
   }
 });

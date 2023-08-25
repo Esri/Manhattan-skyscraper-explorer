@@ -24,18 +24,18 @@
  * on the user choices
  **************************************/
 
-import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
-import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
+import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
-import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
 import IconSymbol3DLayer from "@arcgis/core/symbols/IconSymbol3DLayer";
-import SceneLayer from "@arcgis/core/layers/SceneLayer";
+import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
+import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 
-import { State } from "./State";
-import settings from "./settings";
 import OpacityVariable from "@arcgis/core/renderers/visualVariables/OpacityVariable";
 import SolidEdges3D from "@arcgis/core/symbols/edges/SolidEdges3D";
+import { State } from "./State";
+import settings from "./settings";
 
 export default class RendererGenerator {
   constructor(public layer: SceneLayer, public field: string) {
@@ -96,7 +96,7 @@ export default class RendererGenerator {
           stops: [
             {
               value: 0,
-              opacity: 0.1
+              opacity: 0.0
             },
             {
               value: 1,
