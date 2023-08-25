@@ -97,7 +97,6 @@ const view = new SceneView({
   },
   environment: {
     lighting: {
-      ambientOcclusionEnabled: true,
       directShadowsEnabled: true
     }
   }
