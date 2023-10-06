@@ -33,6 +33,9 @@ export class State extends Accessor {
   selectedBuilding: Graphic | null = null;
 
   @property()
+  hoveredBuilding: Graphic | null = null;
+
+  @property()
   filteredBuildings: number[] | null = null;
 
   @property()

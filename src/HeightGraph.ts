@@ -40,7 +40,7 @@ export default class HeightGraph {
   paddingBottom: number;
 
   circles: d3.Selection<SVGCircleElement, Graphic, SVGSVGElement, unknown>;
-  selectContainer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+  highlightContainer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
 
   constructor(container: string, features: Graphic[], state: State) {
     // general settings for the svg area
@@ -212,26 +212,61 @@ export default class HeightGraph {
 
     // add the circles and the selection
     this.circles = circles;
-    this.selectContainer = svg.append("g");
+    this.highlightContainer = svg.append("g");
   }
 
   // add a circle that will act like a highlight when a circle is clicked on
-  select(feature: Graphic) {
+  highlight(feature: Graphic) {
     const elem = d3.select("#id-" + feature.attributes.objectid);
-    this.selectContainer
+    const cx = parseInt(elem.attr("cx"), 10);
+    const cy = parseInt(elem.attr("cy"), 10);
+
+    this.highlightContainer
       .append("circle")
-      .attr("class", "selectedGraphic")
+      .attr("class", "highlightedGraphic")
       .attr("r", 8)
-      .attr("cx", parseInt(elem.attr("cx"), 10))
-      .attr("cy", parseInt(elem.attr("cy"), 10))
+      .attr("cx", cx)
+      .attr("cy", cy)
       .attr("stroke-width", 4)
       .attr("stroke", settings.highlightOptions.color.toCss())
       .attr("fill", "none");
+
+    const textBackground = this.highlightContainer
+      .append("rect")
+      .attr("class", "highlightedGraphic")
+      .attr("width", 100)
+      .attr("height", 100)
+      .attr("x", cx)
+      .attr("y", cy - 21)
+      .attr("fill", "000");
+
+    const text = this.highlightContainer
+      .append("text")
+      .attr("class", "tooltip")
+      .attr("class", "highlightedGraphic")
+      .classed("hover-graphic", true)
+      .attr("x", cx)
+      .attr("y", cy - 21)
+      .attr("text-anchor", "middle")
+      .text(() => {
+        const attributes = feature.attributes;
+        const name = attributes.name.trim() !== "" ? attributes.name : "Building";
+        return `${name} built in ${attributes.cnstrct_yr}; height: ${parseInt(attributes.heightroof, 10)} feet`;
+      });
+
+    const textBox = text.node()!.getBBox();
+    textBackground
+      .attr("x", textBox.x - 4)
+      .attr("y", textBox.y - 4)
+      .attr("width", textBox.width + 8)
+      .attr("height", textBox.height + 8)
+      .style("fill", "#ddd")
+      .style("fill-opacity", ".9");
   }
 
   // remove circle that acts like a selection highlight
   deselect() {
-    this.selectContainer.selectAll(".selectedGraphic").remove();
+    this.highlightContainer.selectAll(".highlightedGraphic").remove();
   }
 
   // color the buildings according to the new selected period

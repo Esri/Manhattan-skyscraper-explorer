@@ -55,6 +55,7 @@ let buildings: Graphic[];
 let heightGraph: HeightGraph;
 let timeline: Timeline;
 let selectHighlight: IHandle | null = null;
+let hoverHighlight: IHandle | null = null;
 
 // create map
 const map = new Map({
@@ -206,7 +207,7 @@ async function selectFeature(feature: Graphic | null, layerView: SceneLayerView,
     infoWidget.setContent(feature.geometry as Point, feature.attributes, view);
 
     // highlight in the height graph
-    heightGraph.select(feature);
+    heightGraph.highlight(feature);
     // highlight feature on the map
     selectHighlight = layerView.highlight([feature.attributes.objectid]);
     // zoom to the building in the map
@@ -236,6 +237,38 @@ async function selectFeature(feature: Graphic | null, layerView: SceneLayerView,
       }
     };
     queryChain(result);
+  }
+
+  hoverHighlight?.remove();
+  hoverHighlight = null;
+}
+
+view
+  .whenLayerView(sceneLayer)
+  .then((layerView) => {
+    watch(
+      () => state.hoveredBuilding,
+      (feature) => {
+        ignoreAbortErrors(hoverFeature(feature, layerView));
+      }
+    );
+  })
+  .catch(console.error);
+
+async function hoverFeature(feature: Graphic | null, layerView: SceneLayerView): Promise<void> {
+  // if the user has selected a building, don't apply a highlight on hover
+  if (selectHighlight) return;
+
+  if (hoverHighlight) {
+    heightGraph.deselect();
+    hoverHighlight.remove();
+    hoverHighlight = null;
+  }
+  if (feature) {
+    // highlight in the height graph
+    heightGraph.highlight(feature);
+    // highlight feature on the map
+    hoverHighlight = layerView.highlight([feature.attributes.objectid]);
   }
 }
 
@@ -279,6 +312,24 @@ view.on("click", function (event) {
       const feature = findFeature(graphic);
       if (feature) {
         state.selectedBuilding = feature;
+      }
+    }
+  });
+});
+
+// when the user hovers over a building, set it as the hovered building in the state
+view.on("pointer-move", function (event) {
+  view.hitTest(event).then(function (response) {
+    if (response.results.length === 0) {
+      state.hoveredBuilding = null;
+    } else {
+      const result = response.results[0];
+      const graphic = result.type === "graphic" ? result.graphic : null;
+      if (graphic && graphic.layer.title === "Buildings Manhattan wiki") {
+        const feature = findFeature(graphic);
+        if (feature) {
+          state.hoveredBuilding = feature;
+        }
       }
     }
   });
