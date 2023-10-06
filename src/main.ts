@@ -207,7 +207,7 @@ async function selectFeature(feature: Graphic | null, layerView: SceneLayerView,
     infoWidget.setContent(feature.geometry as Point, feature.attributes, view);
 
     // highlight in the height graph
-    heightGraph.select(feature);
+    heightGraph.highlight(feature);
     // highlight feature on the map
     selectHighlight = layerView.highlight([feature.attributes.objectid]);
     // zoom to the building in the map
@@ -266,7 +266,7 @@ async function hoverFeature(feature: Graphic | null, layerView: SceneLayerView):
   }
   if (feature) {
     // highlight in the height graph
-    heightGraph.select(feature);
+    heightGraph.highlight(feature);
     // highlight feature on the map
     hoverHighlight = layerView.highlight([feature.attributes.objectid]);
   }
