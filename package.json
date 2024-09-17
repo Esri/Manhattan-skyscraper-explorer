@@ -19,7 +19,7 @@
     "d3": "^7.8.5",
     "swiper": "^10.0.3",
     "typescript": "^5.0.4",
-    "vite": "^4.3.9"
+    "vite": "^4.5.5"
   },
   "devDependencies": {
     "@types/d3": "^7.4.0",
