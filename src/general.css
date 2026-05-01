@@ -18,52 +18,35 @@
 
    limitations under the License.*/
 
-@import '@arcgis/core/assets/esri/themes/light/main.css';
+@import "@arcgis/core/assets/esri/themes/light/main.css";
+@import "@esri/calcite-components/main.css";
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: "Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif;;
+  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-body {
-  width: 100%;
-  min-width: 1400px;
+:root {
+  --app-text: #323232;
+  --calcite-color-background: #fff;
 }
 
-#headerDiv {
-  position: absolute;
+h1 {
   font-size: 1.8em;
-  padding: 5px 20px;
-  font-weight: bold;
-}
-
-.headerSub {
+  margin: 0;
   font-weight: normal;
+  color: rgb(0, 0, 0);
 }
 
-#viewDiv {
-  position: absolute;
-  top: 0;
-  bottom: 250px;
-  width: 100%;
-  min-width: 1400px;
+a {
+  color: rgb(0, 0, 0);
 }
 
 #timeWrap {
   margin: 0 5px;
-}
-
-#menuDiv {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 250px;
-  min-width: 1400px;
-  background-color: rgba(255,255,255,1);
-  box-shadow: 1px 1px 5px 0 rgba(100,100,100,0.75);
 }
 
 #heightDiv {
@@ -79,11 +62,12 @@ body {
 }
 
 svg {
+  height: 100%;
   overflow: hidden;
 }
 
 button {
-  font-family: "Avenir Next","Helvetica Neue";
+  font-family: "Avenir Next", "Helvetica Neue";
   position: relative;
   display: inline-block;
   -webkit-box-sizing: border-box;
@@ -128,7 +112,6 @@ button {
 }
 
 #categoryDiv {
-  position: absolute;
   left: 1300px;
   top: 10px;
 }
@@ -155,14 +138,35 @@ button {
   border: 1px solid rgb(255, 255, 255);
 }
 
-.circle:hover{
+calcite-segmented-control {
+  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --calcite-segmented-control-border-color: transparent;
+}
+
+calcite-segmented-control-item {
+text-align: center;
+  margin-top: 12px;
+  padding: 0.25rem;
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  background-color: rgb(255, 255, 255);
+  --calcite-segmented-control-color: rgb(0, 0, 0);
+  --calcite-segmented-control-background-color: transparent;
+}
+
+calcite-segmented-control-item[checked] {
+  background-color: rgb(230, 230, 230);
+  --calcite-segmented-control-color: rgb(0, 0, 0);
+}
+
+.circle:hover {
   cursor: pointer;
 }
 
 .tooltip {
   font-size: 0.7em;
   font-weight: bold;
-  font-family: "Avenir Next","Helvetica Neue";
+  font-family: "Avenir Next", "Helvetica Neue";
 }
 
 rect.selection {
@@ -170,13 +174,14 @@ rect.selection {
   stroke: rgba(150, 150, 150, 0);
 }
 
-rect.handle--n, rect.handle--s {
+rect.handle--n,
+rect.handle--s {
   fill: #bbb;
   stroke: #bbb;
   height: 2px !important;
 }
 
-.wikiImage{
+.wikiImage {
   max-width: 300px;
   max-height: 100px;
   float: left;
@@ -204,7 +209,7 @@ p.info {
   height: 25px;
 }
 
-.info img:nth-child(2){
+.info img:nth-child(2) {
   margin-left: 20px;
 }
 
@@ -216,13 +221,8 @@ a {
   cursor: pointer;
 }
 
-.esri-attribution.esri-component {
-  z-index: 1;
-  opacity: 0.6;
-  background-color: rgba(255, 255, 255, 0);
-}
-
-#upper-indicator, #lower-indicator {
+#upper-indicator,
+#lower-indicator {
   font-size: 0.7em;
 }
 
@@ -230,42 +230,36 @@ a {
   font-size: 1.3em;
 }
 
-.swiper {
+calcite-carousel {
   width: 100%;
   height: 260px;
 }
 
-.swiper-button-prev::after, .swiper-button-next::after {
-  text-shadow: -1px 0px 0px white, 1px 0px 0px white, 0px -1px 0px white, 0px 1px 0px white;
-}
-
-.swiper-slide {
-  padding: 20px 40px;
+calcite-carousel-item {
+  padding: 0;
   box-sizing: border-box;
-
-  .attribution {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    font-size: 10px;
-    background: rgba(255, 255, 255, 0.8);
-    overflow: hidden;
-    width: 100%;
-    text-decoration: none;
-    text-align: center;
-  }
-
-  .image {
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 100%;
-    height: 100%;
-  }
 }
 
-.esri-search.esri-component {
-  width: 460px;
+calcite-carousel-item .attribution {
+  display: block;
+  margin-top: 0.35rem;
+  padding: 0 0.5rem 0.5rem;
+  font-size: 0.72rem;
+  color: rgb(120, 120, 120);
+  width: 100%;
+  text-decoration: none;
+  text-align: center;
+}
+
+calcite-carousel-item .attribution b {
+  color: rgb(70, 70, 70);
+}
+
+calcite-carousel-item img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
 }
 
 #loading {
@@ -282,53 +276,22 @@ a {
 #loadingInfo {
   margin-top: 20%;
 }
+
 #loadingImage {
   height: 40px;
 }
 
-path.domain, .tick line {
+path.domain,
+.tick line {
   stroke: #fff;
 }
 
-.esri-attribution__powered-by {
-  display: none;
+arcgis-expand .app-info-panel {
+  max-width: 33rem;
+  padding: 1rem;
+  margin: 0 auto;
 }
 
-#impressumContainer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  width: 600px;
-  margin: 50px auto 0 auto;
-  background-color: #fff;
-  padding: 20px;
-  background-color: rgba(255, 255, 255, 0.8);
-  z-index: 10000;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  display: none;
-}
-
-#impressumContainer .esri-icon-close {
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  cursor: pointer;
-}
-
-#impressumContainer li {
-  padding: 10px;
-}
-
-#impressumContainer a, #logo a, #impressumLink a{
-  font-weight: bold;
-  color: inherit;
-  text-decoration: none;
-}
-
-#impressumLink {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  font-size: 0.7em;
+arcgis-expand .app-info-panel p {
+  margin: 0;
 }

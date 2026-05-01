@@ -28,35 +28,47 @@
  * For the image gallery Galleria.io is used: https://galleria.io/.
  ************************************************************************/
 
-import Swiper from "swiper";
-import { Navigation } from "swiper/modules";
+import "@esri/calcite-components/components/calcite-carousel";
+import "@esri/calcite-components/components/calcite-carousel-item";
 
-// import Swiper and modules styles
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-
-import { Point } from "@arcgis/core/geometry";
+import Point from "@arcgis/core/geometry/Point";
 import request from "@arcgis/core/request";
 import SceneView from "@arcgis/core/views/SceneView";
 
-import settings from "./settings";
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
+import { ArcgisPopup } from "@arcgis/map-components/components/arcgis-popup";
+import settings from "./settings";
 
-export async function setContent(position: Point, attributes: HashMap<any>, view: SceneView) {
+export async function setContent(position: Point, attributes: Record<string, any>, view: SceneView) {
+  if (!view.popup) {
+    return;
+  }
+  // const popupElement = view.popup!;
+  const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
+popupElement.dockOptions = {
+  buttonEnabled: false,
+  // breakpoint: {
+  //   width: 600,
+  //   height: 1000
+  // }
+};
+
+  const latitude = position.latitude ?? 0;
+  const longitude = position.longitude ?? 0;
+
   // Clear the popup content before closing so that, when watching popup visibility in other parts of the
   // app, we can distinguish between the user closing the popup and the popup being closed from this function.
-  view.popup.content = "";
+  popupElement.content = "";
   view.closePopup();
 
   // set the building name, height and construction year from the building attributes
   const name = attributes.name.trim() ? attributes.name : "Building";
   let content = `
 <p class='info'>
-  <img src="./height.png"> ${Math.round(
+  <img src="./height.png" width="25" height="25"> ${Math.round(
     attributes.heightroof
   )} feet
-  <img src='./construction.png'> ${attributes.cnstrct_yr
+      <img src='./construction.png' width="25" height="25"> ${attributes.cnstrct_yr
     }
 </p>`;
 
@@ -79,7 +91,6 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
   });
 
   setupActions({ articleUrl, photoCount });
-  setupGallery(contentEl);
 
   // Wikipedia API is used to retrieve an abstract of the building. All retrieved
   // articles are under the Creative Commons Attribution-ShareAlike License.
@@ -98,7 +109,7 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
       pilimit: "20",
       piprop: "original",
       generator: "geosearch",
-      ggscoord: `${position.latitude}|${position.longitude}`,
+      ggscoord: `${latitude}|${longitude}`,
       ggsradius: "200",
       ggslimit: "20",
       origin: "*",
@@ -143,8 +154,8 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
       accuracy: "16",
       has_geo: "true",
       license: "2,3,4,5,6,7",
-      lat: position.latitude.toString(),
-      lon: position.longitude.toString(),
+      lat: latitude.toString(),
+      lon: longitude.toString(),
       radius: "0.1"
     }).toString();
 
@@ -162,9 +173,8 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
     const wikiActionId = "wiki-action";
     const flickrActionId = "flickr-action";
 
-    view.popup.actions.removeAll();
     if (articleUrl) {
-      view.popup.actions.push(
+      popupElement.actions.push(
         new ActionButton({
           title: "Wikipedia",
           id: wikiActionId,
@@ -173,7 +183,7 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
       );
     }
     if (photoCount > 0) {
-      view.popup.actions.push(
+      popupElement.actions.push(
         new ActionButton({
           title: "Photos",
           id: flickrActionId,
@@ -181,9 +191,10 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
         })
       );
     }
-    const handleGroupKey = "info-widget-actions";
-    const handle = view.popup.on("trigger-action", (event) => {
-      switch (event.action.id) {
+
+    const onTriggerAction = (event: Event) => {
+      const customEvent = event as CustomEvent<{ action?: { id?: string } }>;
+      switch (customEvent.detail?.action?.id) {
         case wikiActionId: {
           window.open(articleUrl, "_blank");
           break;
@@ -194,22 +205,22 @@ export async function setContent(position: Point, attributes: HashMap<any>, view
             tags: "building",
             accuracy: "16",
             has_geo: "true",
-            lat: position.latitude.toString(),
-            lon: position.longitude.toString(),
+            lat: latitude.toString(),
+            lon: longitude.toString(),
             radius: "0.1"
           }).toString();
           window.open(queryUrl.toString(), "_blank");
           break;
         }
       }
-      view.popup.removeHandles(handleGroupKey);
-      view.popup.addHandles(handle, handleGroupKey);
-    });
+    };
+
+    popupElement.addEventListener("arcgisTriggerAction", onTriggerAction);
   }
 }
 
 function createGalleryContent(photos: Element[]) {
-  const slideEls = photos.map((photo) => {
+  const itemEls = photos.map((photo) => {
     const url = `https://farm${photo.getAttribute("farm")}.staticflickr.com/${photo.getAttribute(
       "server"
     )}/${photo.getAttribute("id")}_${photo.getAttribute("secret")}.jpg`;
@@ -218,33 +229,14 @@ function createGalleryContent(photos: Element[]) {
     if (attributionTitle.length > settings.maxAttributionLength) {
       attributionTitle = attributionTitle?.slice(0, settings.maxAttributionLength - 3) + "...";
     }
-    return `<div class="swiper-slide">
-<div class="image" style="background-image: url('${url}')"></div>
-<a class="attribution" href="${link}" target = "_blank"><b>${attributionTitle}</b> courtesy of Flickr</a>
-</div>`;
+    return `<calcite-carousel-item label="Building photos">
+    <img src='${url}' style="display:block;width:100%;height:auto;">
+  <a class="attribution" href="${link}" target="_blank" style="display:block;color:#808080;text-align:center;"><b>${attributionTitle}</b> courtesy of Flickr</a>
+  </calcite-carousel-item>`;
   });
 
   return `
-<div class="swiper">
-  <div class="swiper-wrapper">
-    ${slideEls.join("\n")}
-  </div>
-  <div class="swiper-pagination"></div>
-  <div class="swiper-button-prev"></div>
-  <div class="swiper-button-next"></div>
-</div>`;
-}
-
-function setupGallery(popupContentEl: HTMLElement) {
-  const swiperEl = popupContentEl.getElementsByClassName("swiper")[0] as HTMLElement;
-  const prevEl = popupContentEl.getElementsByClassName("swiper-button-prev")[0] as HTMLElement;
-  const nextEl = popupContentEl.getElementsByClassName("swiper-button-next")[0] as HTMLElement;
-  new Swiper(swiperEl, {
-    loop: true,
-    modules: [Navigation],
-    navigation: {
-      prevEl,
-      nextEl
-    }
-  });
+<calcite-carousel label="Building details" arrow-type="inline">
+  ${itemEls.join("\n")}
+</calcite-carousel>`;
 }

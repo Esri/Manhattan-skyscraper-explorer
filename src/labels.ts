@@ -24,17 +24,17 @@
  * a GeoJSON file of points.
  **********************************/
 
-import request from "@arcgis/core/request";
+import Map from "@arcgis/core/Map";
 import Point from "@arcgis/core/geometry/Point";
+import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import LabelClass from "@arcgis/core/layers/support/LabelClass";
-import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
-import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
-import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import request from "@arcgis/core/request";
 import IconSymbol3DLayer from "@arcgis/core/symbols/IconSymbol3DLayer";
-import Map from "@arcgis/core/Map";
-import { SpatialReference } from "@arcgis/core/geometry";
+import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
+import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
+import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 
 export function initialize(url: string, map: Map) {
   request(url, {

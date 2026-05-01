@@ -26,84 +26,56 @@
  */
 
 import Graphic from "@arcgis/core/Graphic";
-import Map from "@arcgis/core/Map";
+import Collection from "@arcgis/core/core/Collection";
+import type { ResourceHandle } from "@arcgis/core/core/Handles";
 import { watch, when, whenOnce } from "@arcgis/core/core/reactiveUtils";
-import { Extent, Point, SpatialReference } from "@arcgis/core/geometry";
+import Extent from "@arcgis/core/geometry/Extent";
+import Point from "@arcgis/core/geometry/Point";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import Query from "@arcgis/core/rest/support/Query";
 import SceneView from "@arcgis/core/views/SceneView";
 import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
+import LayerSearchSource from "@arcgis/core/widgets/Search/LayerSearchSource";
+import "@arcgis/map-components/components/arcgis-compass";
+import "@arcgis/map-components/components/arcgis-expand";
+import "@arcgis/map-components/components/arcgis-navigation-toggle";
+import "@arcgis/map-components/components/arcgis-popup";
+import "@arcgis/map-components/components/arcgis-scene";
+import "@arcgis/map-components/components/arcgis-search";
+import "@arcgis/map-components/components/arcgis-zoom";
+import "@esri/calcite-components/components/calcite-label";
+import "@esri/calcite-components/components/calcite-segmented-control";
+import "@esri/calcite-components/components/calcite-segmented-control-item";
+import "@esri/calcite-components/components/calcite-shell";
+import "@esri/calcite-components/components/calcite-shell-panel";
 
 import HeightGraph from "./HeightGraph";
 import RendererGenerator from "./RendererGenerator";
 import { State } from "./State";
 import Timeline from "./Timeline";
-import * as categorySelection from "./categorySelection";
 import * as infoWidget from "./infoWidget";
 import * as labels from "./labels";
-import * as searchWidget from "./searchWidget";
 import settings from "./settings";
-import { attributesToLowerCase, ignoreAbortErrors } from "./utils";
-
-const containers = { view: "viewDiv", timeline: "timeDiv", heightGraph: "heightDiv", categories: "categoryDiv" };
+import { attributesToLowerCase } from "./utils";
 
 const state = new State();
-
 let buildings: Graphic[];
 let heightGraph: HeightGraph;
 let timeline: Timeline;
-let selectHighlight: IHandle | null = null;
+let selectHighlight: ResourceHandle | null = null;
+let sceneLayerView: SceneLayerView | null = null;
 
-// create map
-const map = new Map({
-  basemap: "gray-vector",
-  ground: "world-elevation"
-});
+const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
+await viewElement.viewOnReady();
+viewElement.environment.lighting = {
+   type: "sun",
+   directShadowsEnabled: true,
+};
 
-// create view
-const view = new SceneView({
-  container: containers.view,
-  map: map,
-  padding: {
-    top: 50
-  },
-  camera: {
-    position: {
-      x: -8240826.9778516665,
-      y: 4967756.95441402,
-      z: 1472.4,
-      spatialReference: new SpatialReference({ wkid: 3857 })
-    },
-    heading: 59,
-    tilt: 49
-  },
-  constraints: {
-    tilt: {
-      max: 90,
-      mode: "manual"
-    }
-  },
-  highlightOptions: settings.highlightOptions,
-  popup: {
-    dockEnabled: true,
-    dockOptions: {
-      buttonEnabled: false,
-      breakpoint: false
-    },
-    actions: [],
-    autoOpenEnabled: false
-  },
-  environment: {
-    lighting: {
-      directShadowsEnabled: true
-    }
-  }
-});
-
-// remove navigation widgets from upper left corner
-view.ui.empty("top-left");
+const view = viewElement.view as SceneView;
+view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
 
 // we set an initial filter to display only buildings whose height is between minHeight and maxHeight
 const filter = [settings.buildingOptions.minHeight, settings.buildingOptions.maxHeight];
@@ -123,7 +95,6 @@ const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
 const infoPoints = new FeatureLayer({
   url: settings.infoPointsUrl,
   popupEnabled: false,
-  // relative to scene displays icons on top of buildings
   elevationInfo: {
     mode: "relative-to-scene"
   },
@@ -137,13 +108,36 @@ const infoPoints = new FeatureLayer({
   visible: false
 });
 
-map.addMany([sceneLayer, infoPoints]);
+view.map!.addMany([sceneLayer, infoPoints]);
 
 // add labels to display Manhattan boroughs
-labels.initialize("./data/manhattan-boroughs.json", map);
+labels.initialize("./data/manhattan-boroughs.json", view.map!);
 
-// initialize search widget
-searchWidget.initialize(view, infoPoints, "NAME", state);
+// set up Search Component
+const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
+searchElement.sources = new Collection([
+  new LayerSearchSource({
+    layer: infoPoints,
+    outFields: ["*"],
+    searchFields: ["NAME"],
+    displayField: "NAME",
+    exactMatch: false,
+    placeholder: "Ex: Empire State Building"
+  })
+]);
+
+searchElement.addEventListener("arcgisSelectResult", (event) => {
+  const selectResultEvent = event as CustomEvent<{ result: { feature: Graphic } }>;
+  const feature = selectResultEvent.detail.result.feature;
+  attributesToLowerCase(feature);
+  state.selectedBuilding = feature;
+});
+
+// set up category filter
+const categoryControl = document.querySelector<HTMLCalciteSegmentedControlElement>("calcite-segmented-control")!;
+categoryControl.addEventListener("calciteSegmentedControlChange", () => {
+    state.selectedCategory = categoryControl.value;
+});
 
 // create a query on the infoPoints layer to get all the buildings that will be displayed in the height graph
 const query = infoPoints.createQuery();
@@ -158,9 +152,8 @@ function initGraphics(results: FeatureSet) {
     attributesToLowerCase(results.features[i]);
   }
   buildings = results.features;
-  categorySelection.initialize(containers.categories, state);
-  heightGraph = new HeightGraph(containers.heightGraph, buildings, state);
-  timeline = new Timeline(containers.timeline, state);
+  heightGraph = new HeightGraph("heightDiv", buildings, state);
+  timeline = new Timeline("timeDiv", state);
   watch(
     () => state.selectedPeriod,
     (newPeriod) => {
@@ -178,30 +171,32 @@ function initGraphics(results: FeatureSet) {
 view
   .whenLayerView(sceneLayer)
   .then((layerView) => {
-    let selectAbortController: AbortController;
+    sceneLayerView = layerView;
+    // let selectAbortController: AbortController;
     watch(
       () => state.selectedBuilding,
       (feature) => {
-        selectAbortController?.abort();
-        selectAbortController = new AbortController();
-        const { signal } = selectAbortController;
-        ignoreAbortErrors(selectFeature(feature, layerView, signal));
+        // selectAbortController?.abort();
+        // selectAbortController = new AbortController();
+        // const { signal } = selectAbortController;
+ console.log("updated state", feature)
+ selectFeature(feature, layerView)
+
+        // ignoreAbortErrors(selectFeature(feature, layerView, signal));
       }
     );
   })
   .catch(console.error);
 
-async function selectFeature(feature: Graphic | null, layerView: SceneLayerView, signal: AbortSignal): Promise<void> {
+async function selectFeature(feature: Graphic | null, layerView: SceneLayerView): Promise<void> {
   // remove highlight for selection in height graph and on the map
+ 
   if (selectHighlight) {
     heightGraph.deselect();
     selectHighlight.remove();
     selectHighlight = null;
-    searchWidget.show();
   }
   if (feature) {
-    // hide the search widget to show the popup
-    searchWidget.hide();
     // display information about the building in the popup
     infoWidget.setContent(feature.geometry as Point, feature.attributes, view);
 
@@ -210,27 +205,26 @@ async function selectFeature(feature: Graphic | null, layerView: SceneLayerView,
     // highlight feature on the map
     selectHighlight = layerView.highlight([feature.attributes.objectid]);
     // zoom to the building in the map
-    await view.goTo(feature.geometry, { duration: 1000, easing: "out-expo", signal });
+    if (feature.geometry) {
+      await view.goTo(feature.geometry, { duration: 1000 });
+    }
 
     // wait for layer data to load
-    await whenOnce(() => !layerView.updating, signal);
+    await whenOnce(() => !layerView.updating);
     // frame the 3D building
     const query = new Query();
     query.outFields = ["*"];
     query.objectIds = [feature.attributes.objectid];
-    const result = await layerView.queryExtent(query, { signal });
+    const result = await layerView.queryExtent(query);
     // the queryChain function will be run until the queryExtent function returns the 3D extent of the building
-    const queryChain = (result: { extent: Extent }) => {
-      if (signal.aborted) {
-        return;
-      }
+    const queryChain = (result: { count: number; extent: Extent | null }) => {
       const loadingEl = document.getElementById("loading")!;
       if (result.extent !== null) {
         loadingEl.style.display = "none";
-        view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000, easing: "out-expo", signal });
+        view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000 });
       } else {
         loadingEl.style.display = "inline";
-        layerView.queryExtent(query, { signal }).then((result) => {
+        layerView.queryExtent(query).then((result) => {
           window.setTimeout(() => queryChain(result), 1000);
         });
       }
@@ -275,10 +269,13 @@ view.on("click", function (event) {
     }
     const result = response.results[0];
     const graphic = result.type === "graphic" ? result.graphic : null;
-    if (graphic && graphic.layer.title === "Buildings Manhattan wiki") {
+    if (graphic && graphic.layer && graphic.layer.title === "Buildings Manhattan wiki") {
       const feature = findFeature(graphic);
       if (feature) {
         state.selectedBuilding = feature;
+        if (sceneLayerView) {
+          void selectFeature(feature, sceneLayerView);
+        }
       }
     }
   });
@@ -289,7 +286,7 @@ watch(
   () => view.popup?.visible,
   (newValue) => {
     // if content is defined, then the popup was closed by the user rather than hidden by the app
-    const wasPopupClosedByUser = !!view.popup.content;
+    const wasPopupClosedByUser = !!view.popup?.content;
     if (!newValue && wasPopupClosedByUser) {
       state.selectedBuilding = null;
     }
@@ -302,14 +299,6 @@ function findFeature(graphic: Graphic): Graphic {
   })[0];
   return feature;
 }
-
-// add events for disclaimer window
-document.getElementById("impressumLink")!.addEventListener("click", function () {
-  document.getElementById("impressumContainer")!.style.display = "inline";
-});
-document.getElementById("close")!.addEventListener("click", function () {
-  document.getElementById("impressumContainer")!.style.display = "none";
-});
 
 function generateDefinitionExpression(filter: number[]) {
   return (
