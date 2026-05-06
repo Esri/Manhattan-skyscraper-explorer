@@ -37,22 +37,12 @@ import SceneView from "@arcgis/core/views/SceneView";
 
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
 import { ArcgisPopup } from "@arcgis/map-components/components/arcgis-popup";
-import settings from "./settings";
 
 export async function setContent(position: Point, attributes: Record<string, any>, view: SceneView) {
   if (!view.popup) {
     return;
   }
-  // const popupElement = view.popup!;
   const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
-popupElement.dockOptions = {
-  buttonEnabled: false,
-  // breakpoint: {
-  //   width: 600,
-  //   height: 1000
-  // }
-};
-
   const latitude = position.latitude ?? 0;
   const longitude = position.longitude ?? 0;
 
@@ -79,8 +69,6 @@ popupElement.dockOptions = {
     articleUrl = wikiResult.articleUrl;
   }
 
-  const { gallery, photoCount } = await getFlickrPhotoContent();
-  content += gallery ?? "";
 
   const contentEl = document.createElement("div");
   contentEl.innerHTML = content;
@@ -90,7 +78,7 @@ popupElement.dockOptions = {
     location: position
   });
 
-  setupActions({ articleUrl, photoCount });
+  setupActions({ articleUrl });
 
   // Wikipedia API is used to retrieve an abstract of the building. All retrieved
   // articles are under the Creative Commons Attribution-ShareAlike License.
@@ -143,35 +131,8 @@ popupElement.dockOptions = {
     return { extract, articleUrl };
   }
 
-  // Flickr API is used to retrieve images that are under Creative Commons license
-  // Please see the Flickr API Terms of Use here: https://www.flickr.com/services/api/tos/
-  async function getFlickrPhotoContent(): Promise<{ gallery?: string; photoCount: number }> {
-    const url = new URL("https://api.flickr.com/services/rest/");
-    url.search = new URLSearchParams({
-      method: "flickr.photos.search",
-      api_key: "099473f4030cba02455eb7db33704767",
-      tags: "building",
-      accuracy: "16",
-      has_geo: "true",
-      license: "2,3,4,5,6,7",
-      lat: latitude.toString(),
-      lon: longitude.toString(),
-      radius: "0.1"
-    }).toString();
-
-    const response = await request(url, { responseType: "xml" });
-    const photos: Element[] = response.data.getElementsByTagName("photo");
-    const photoCount = photos.length;
-    if (photoCount == 0) {
-      return { photoCount };
-    }
-    const gallery = createGalleryContent(Array.from(photos).slice(0, settings.maxPhotoCount));
-    return { gallery, photoCount };
-  }
-
-  function setupActions({ articleUrl, photoCount }: { articleUrl?: string; photoCount: number }) {
+  function setupActions({ articleUrl }: { articleUrl?: string }) {
     const wikiActionId = "wiki-action";
-    const flickrActionId = "flickr-action";
 
     if (articleUrl) {
       popupElement.actions.push(
@@ -179,15 +140,6 @@ popupElement.dockOptions = {
           title: "Wikipedia",
           id: wikiActionId,
           icon: "article"
-        })
-      );
-    }
-    if (photoCount > 0) {
-      popupElement.actions.push(
-        new ActionButton({
-          title: "Photos",
-          id: flickrActionId,
-          icon: "images"
         })
       );
     }
@@ -199,19 +151,6 @@ popupElement.dockOptions = {
           window.open(articleUrl, "_blank");
           break;
         }
-        case flickrActionId: {
-          const queryUrl = new URL("https://www.flickr.com/search/");
-          queryUrl.search = new URLSearchParams({
-            tags: "building",
-            accuracy: "16",
-            has_geo: "true",
-            lat: latitude.toString(),
-            lon: longitude.toString(),
-            radius: "0.1"
-          }).toString();
-          window.open(queryUrl.toString(), "_blank");
-          break;
-        }
       }
     };
 
@@ -219,24 +158,3 @@ popupElement.dockOptions = {
   }
 }
 
-function createGalleryContent(photos: Element[]) {
-  const itemEls = photos.map((photo) => {
-    const url = `https://farm${photo.getAttribute("farm")}.staticflickr.com/${photo.getAttribute(
-      "server"
-    )}/${photo.getAttribute("id")}_${photo.getAttribute("secret")}.jpg`;
-    const link = `https://www.flickr.com/photos/${photo.getAttribute("owner")}/${photo.getAttribute("id")}/`;
-    let attributionTitle = photo.getAttribute("title")!;
-    if (attributionTitle.length > settings.maxAttributionLength) {
-      attributionTitle = attributionTitle?.slice(0, settings.maxAttributionLength - 3) + "...";
-    }
-    return `<calcite-carousel-item label="Building photos">
-    <img src='${url}' style="display:block;width:100%;height:auto;">
-  <a class="attribution" href="${link}" target="_blank" style="display:block;color:#808080;text-align:center;"><b>${attributionTitle}</b> courtesy of Flickr</a>
-  </calcite-carousel-item>`;
-  });
-
-  return `
-<calcite-carousel label="Building details" arrow-type="inline">
-  ${itemEls.join("\n")}
-</calcite-carousel>`;
-}
