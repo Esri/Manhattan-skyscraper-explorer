@@ -23,9 +23,6 @@
  * Wikipedia API is used to retrieve an abstract of the building. All retrieved
  * articles are under the Creative Commons Attribution-ShareAlike License.
  * See https://wikimediafoundation.org/wiki/Terms_of_Use for details.
- * Flickr API is used to retrieve images of the buildings under Creative Commons license.
- * See https://www.flickr.com/services/api/tos/ for licensing information.
- * For the image gallery Galleria.io is used: https://galleria.io/.
  ************************************************************************/
 
 import "@esri/calcite-components/components/calcite-carousel";
