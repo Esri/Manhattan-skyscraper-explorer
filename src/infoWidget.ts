@@ -52,13 +52,13 @@ export async function setContent(position: Point, attributes: Record<string, any
   // set the building name, height and construction year from the building attributes
   const name = attributes.name.trim() ? attributes.name : "Building";
   let content = `
-<p class='info'>
-  <img src="./height.png" width="25" height="25"> ${Math.round(
-    attributes.heightroof
-  )} feet
-      <img src='./construction.png' width="25" height="25"> ${attributes.cnstrct_yr
-    }
-</p>`;
+    <p class='info'>
+      <img src="./height.png" width="25" height="25"> ${Math.round(
+        attributes.heightroof
+      )} feet
+          <img src='./construction.png' width="25" height="25"> ${attributes.cnstrct_yr
+        }
+    </p>`;
 
   let articleUrl = undefined;
   if (name !== "Building") {
