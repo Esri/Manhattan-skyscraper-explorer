@@ -67,7 +67,6 @@ export async function setContent(position: Point, attributes: Record<string, any
     articleUrl = wikiResult.articleUrl;
   }
 
-
   const contentEl = document.createElement("div");
   contentEl.innerHTML = content;
   await view.openPopup({
