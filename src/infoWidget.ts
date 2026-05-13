@@ -6,7 +6,7 @@
 
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
 
@@ -24,6 +24,7 @@
  * articles are under the Creative Commons Attribution-ShareAlike License.
  * See https://wikimediafoundation.org/wiki/Terms_of_Use for details.
  ************************************************************************/
+
 
 import "@esri/calcite-components/components/calcite-carousel";
 import "@esri/calcite-components/components/calcite-carousel-item";
