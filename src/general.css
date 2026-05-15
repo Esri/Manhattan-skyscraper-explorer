@@ -195,11 +195,6 @@ rect.handle--s {
   cursor: pointer;
 }
 
-a#link-flickr {
-  text-align: right;
-  font-size: 0.8rem;
-}
-
 p.info {
   font-size: 1rem;
 }
@@ -270,7 +265,7 @@ calcite-carousel-item img {
   right: 0;
   text-align: center;
   background-color: rgba(255, 255, 255, 0.6);
-  display: none;
+  /* display: none; */
 }
 
 #loadingInfo {

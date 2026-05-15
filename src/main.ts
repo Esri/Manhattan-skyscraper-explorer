@@ -26,15 +26,14 @@
  */
 
 import Graphic from "@arcgis/core/Graphic";
+import PopupTemplate from "@arcgis/core/PopupTemplate";
 import Collection from "@arcgis/core/core/Collection";
-import type { ResourceHandle } from "@arcgis/core/core/Handles";
-import { watch, when, whenOnce } from "@arcgis/core/core/reactiveUtils";
-import Extent from "@arcgis/core/geometry/Extent";
+import { watch, when } from "@arcgis/core/core/reactiveUtils";
 import Point from "@arcgis/core/geometry/Point";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
-import Query from "@arcgis/core/rest/support/Query";
+import ActionButton from "@arcgis/core/support/actions/ActionButton";
 import SceneView from "@arcgis/core/views/SceneView";
 import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
 import LayerSearchSource from "@arcgis/core/widgets/Search/LayerSearchSource";
@@ -42,6 +41,7 @@ import "@arcgis/map-components/components/arcgis-compass";
 import "@arcgis/map-components/components/arcgis-expand";
 import "@arcgis/map-components/components/arcgis-navigation-toggle";
 import "@arcgis/map-components/components/arcgis-popup";
+import type { ArcgisPopup } from "@arcgis/map-components/components/arcgis-popup";
 import "@arcgis/map-components/components/arcgis-scene";
 import "@arcgis/map-components/components/arcgis-search";
 import "@arcgis/map-components/components/arcgis-zoom";
@@ -55,20 +55,22 @@ import HeightGraph from "./HeightGraph";
 import RendererGenerator from "./RendererGenerator";
 import { State } from "./State";
 import Timeline from "./Timeline";
-import * as infoWidget from "./infoWidget";
 import * as labels from "./labels";
 import settings from "./settings";
-import { attributesToLowerCase } from "./utils";
+import {
+  attributesToLowerCase,
+  getWikiContent
+} from "./utils";
 
 const state = new State();
 let buildings: Graphic[];
 let heightGraph: HeightGraph;
 let timeline: Timeline;
-let selectHighlight: ResourceHandle | null = null;
 let sceneLayerView: SceneLayerView | null = null;
 
 const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
 await viewElement.viewOnReady();
+
 viewElement.environment.lighting = {
    type: "sun",
    directShadowsEnabled: true,
@@ -77,6 +79,70 @@ viewElement.environment.lighting = {
 const view = viewElement.view as SceneView;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
 
+const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
+
+const popupDockOptions = {
+  buttonEnabled: false,
+  breakpoint: false,
+  position: "top-right" as const
+};
+
+popupElement.dockEnabled = true;
+popupElement.dockOptions = popupDockOptions;
+const articleUrlByObjectId = new Map<string, string>();
+
+const buildingPopupTemplate = new PopupTemplate({
+  title: "{name}",
+  content: async (feature) => {
+    const graphic = feature.graphic as Graphic;
+    const attributes = graphic.attributes ?? {};
+    const position = graphic.geometry as Point | null;
+    const name = attributes.name ?? attributes.NAME ?? "Building";
+    const normalizedName = typeof name === "string" && name.trim() ? name : "Building";
+    const objectId = String(attributes.objectid ?? attributes.OBJECTID ?? "");
+    const height = Math.round(attributes.heightroof ?? attributes.HEIGHTROOF ?? 0);
+    const year = attributes.cnstrct_yr ?? attributes.CNSTRCT_YR ?? "-";
+
+    let content = `
+      <p class='info'>
+        <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${height} feet
+            <img src='${new URL("construction.png", document.baseURI).toString()}' width="25" height="25"> ${year}
+      </p>`;
+
+    if (normalizedName !== "Building") {
+      const wikiResult = await getWikiContent(normalizedName, position);
+      content += wikiResult.extract ?? "";
+      if (wikiResult.articleUrl) {
+        articleUrlByObjectId.set(objectId, wikiResult.articleUrl);
+      }
+    }
+
+    return content;
+  },
+  actions: [new ActionButton({
+  title: "Wikipedia",
+  id: "wiki-action",
+  icon: "article"
+})]
+});
+
+popupElement.addEventListener("arcgisTriggerAction", (event) => {
+  if (event.detail?.action?.id !== "wiki-action") {
+    return;
+  }
+
+  const selectedFeature = popupElement.selectedFeature as Graphic | null;
+  const attributes = selectedFeature?.attributes ?? {};
+  const objectId = String(attributes.objectid ?? attributes.OBJECTID ?? "");
+  const name = attributes.name ?? attributes.NAME ?? "Building";
+  const normalizedName = typeof name === "string" && name.trim() ? name.trim() : "Building";
+  const articleUrl =
+    articleUrlByObjectId.get(objectId) ||
+    `https://en.wikipedia.org/wiki/${encodeURIComponent(normalizedName)}`;
+
+  window.open(articleUrl, "_blank", "noopener,noreferrer");
+});
+
 // we set an initial filter to display only buildings whose height is between minHeight and maxHeight
 const filter = [settings.buildingOptions.minHeight, settings.buildingOptions.maxHeight];
 const definitionExpression = generateDefinitionExpression(filter);
@@ -84,11 +150,17 @@ const definitionExpression = generateDefinitionExpression(filter);
 // scene layer with the buildings
 const sceneLayer = new SceneLayer({
   url: settings.buildingsUrl,
-  popupEnabled: false,
+  popupTemplate: buildingPopupTemplate,
   outFields: ["*"],
   definitionExpression: definitionExpression
 });
-
+view
+  .whenLayerView(sceneLayer)
+  .then((layerView) => {
+        document.getElementById("loading")!.style.display = "none";
+    sceneLayerView = layerView;
+  })
+  .catch(console.error);
 const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
 
 // feature layer with centroids of buildings - displayed on top of buildings to show which buildings contain information from wikipedia
@@ -168,71 +240,46 @@ function initGraphics(results: FeatureSet) {
   );
 }
 
-view
-  .whenLayerView(sceneLayer)
-  .then((layerView) => {
-    sceneLayerView = layerView;
-    // let selectAbortController: AbortController;
-    watch(
-      () => state.selectedBuilding,
-      (feature) => {
-        // selectAbortController?.abort();
-        // selectAbortController = new AbortController();
-        // const { signal } = selectAbortController;
- console.log("updated state", feature)
- selectFeature(feature, layerView)
+// POPUP AND HIGHLIGHTING
 
-        // ignoreAbortErrors(selectFeature(feature, layerView, signal));
-      }
-    );
-  })
-  .catch(console.error);
+// Keep selected building state synced with popup component selected feature
+popupElement.addEventListener("arcgisPropertyChange", async (event) => {
+  const propertyChangeEvent = event as CustomEvent<{ name?: string }>;
+  const changedProperty = propertyChangeEvent.detail?.name;
 
-async function selectFeature(feature: Graphic | null, layerView: SceneLayerView): Promise<void> {
-  // remove highlight for selection in height graph and on the map
- 
-  if (selectHighlight) {
+  if (changedProperty === "open" && !popupElement.open) {
     heightGraph.deselect();
-    selectHighlight.remove();
-    selectHighlight = null;
+    state.selectedBuilding = null;
+    return;
   }
+
+  if (changedProperty !== "selectedFeature") {
+    return;
+  }
+
+  const selectedFeature = popupElement.selectedFeature as Graphic | null;
+  if (!selectedFeature) {
+    return;
+  }
+
+  const objectid = selectedFeature.attributes.objectid ?? selectedFeature.attributes.OBJECTID;
+  const feature =
+    objectid == null
+      ? null
+      : buildings.find((b) => String(b.attributes.objectid) === String(objectid)) ?? null;
+
+  heightGraph.deselect();
   if (feature) {
-    // display information about the building in the popup
-    infoWidget.setContent(feature.geometry as Point, feature.attributes, view);
-
-    // highlight in the height graph
     heightGraph.select(feature);
-    // highlight feature on the map
-    selectHighlight = layerView.highlight([feature.attributes.objectid]);
-    // zoom to the building in the map
-    if (feature.geometry) {
-      await view.goTo(feature.geometry, { duration: 1000 });
-    }
-
-    // wait for layer data to load
-    await whenOnce(() => !layerView.updating);
-    // frame the 3D building
-    const query = new Query();
-    query.outFields = ["*"];
-    query.objectIds = [feature.attributes.objectid];
-    const result = await layerView.queryExtent(query);
-    // the queryChain function will be run until the queryExtent function returns the 3D extent of the building
-    const queryChain = (result: { count: number; extent: Extent | null }) => {
-      const loadingEl = document.getElementById("loading")!;
-      if (result.extent !== null) {
-        loadingEl.style.display = "none";
-        view.goTo({ target: result.extent.expand(3), tilt: 60 }, { duration: 1000 });
-      } else {
-        loadingEl.style.display = "inline";
-        layerView.queryExtent(query).then((result) => {
-          window.setTimeout(() => queryChain(result), 1000);
-        });
-      }
-    };
-    queryChain(result);
+    state.selectedBuilding = feature;
   }
-}
 
+  if (selectedFeature.geometry) {
+    await view.goTo(selectedFeature.geometry, { duration: 1000 });
+  }
+});
+
+// FILTERS
 when(
   () => state.filteredBuildings,
   function (newFilter) {
@@ -261,44 +308,7 @@ watch(
   }
 );
 
-// when user clicks on a building, set it as the selected building in the state
-view.on("click", function (event) {
-  view.hitTest(event).then(function (response) {
-    if (response.results.length === 0) {
-      return;
-    }
-    const result = response.results[0];
-    const graphic = result.type === "graphic" ? result.graphic : null;
-    if (graphic && graphic.layer && graphic.layer.title === "Buildings Manhattan wiki") {
-      const feature = findFeature(graphic);
-      if (feature) {
-        state.selectedBuilding = feature;
-        if (sceneLayerView) {
-          void selectFeature(feature, sceneLayerView);
-        }
-      }
-    }
-  });
-});
 
-// clear the selected building when the popup is closed
-watch(
-  () => view.popup?.visible,
-  (newValue) => {
-    // if content is defined, then the popup was closed by the user rather than hidden by the app
-    const wasPopupClosedByUser = !!view.popup?.content;
-    if (!newValue && wasPopupClosedByUser) {
-      state.selectedBuilding = null;
-    }
-  }
-);
-
-function findFeature(graphic: Graphic): Graphic {
-  const feature = buildings.filter(function (b) {
-    return b.attributes.objectid === graphic.attributes.OBJECTID;
-  })[0];
-  return feature;
-}
 
 function generateDefinitionExpression(filter: number[]) {
   return (
