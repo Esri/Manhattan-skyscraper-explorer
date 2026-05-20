@@ -111,33 +111,6 @@ button {
   text-decoration: none;
 }
 
-#categoryDiv {
-  left: 1300px;
-  top: 10px;
-}
-
-#categoryDiv button {
-  background-color: white;
-  display: block;
-  margin-top: 10px;
-  padding: 5px 12px;
-  width: 300px;
-  color: rgb(130, 130, 130);
-  border: 1px solid rgb(150, 150, 150);
-}
-
-#categoryDiv button.selected {
-  background-color: rgb(230, 230, 230);
-  color: rgb(0, 0, 0);
-  border: 1px solid rgb(255, 255, 255);
-}
-
-#categoryDiv button:hover {
-  background-color: rgb(230, 230, 230);
-  color: rgb(0, 0, 0);
-  border: 1px solid rgb(255, 255, 255);
-}
-
 calcite-segmented-control {
   font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --calcite-segmented-control-border-color: transparent;
@@ -163,12 +136,6 @@ calcite-segmented-control-item[checked] {
   cursor: pointer;
 }
 
-.tooltip {
-  font-size: 0.7em;
-  font-weight: bold;
-  font-family: "Avenir Next", "Helvetica Neue";
-}
-
 rect.selection {
   fill: rgba(150, 150, 150, 0.5);
   stroke: rgba(150, 150, 150, 0);
@@ -179,20 +146,6 @@ rect.handle--s {
   fill: #bbb;
   stroke: #bbb;
   height: 2px !important;
-}
-
-.wikiImage {
-  max-width: 300px;
-  max-height: 100px;
-  float: left;
-}
-
-#tooltip img {
-  height: 250px;
-}
-
-.pointer {
-  cursor: pointer;
 }
 
 p.info {
@@ -223,38 +176,6 @@ a {
 
 .tick text {
   font-size: 1.3em;
-}
-
-calcite-carousel {
-  width: 100%;
-  height: 260px;
-}
-
-calcite-carousel-item {
-  padding: 0;
-  box-sizing: border-box;
-}
-
-calcite-carousel-item .attribution {
-  display: block;
-  margin-top: 0.35rem;
-  padding: 0 0.5rem 0.5rem;
-  font-size: 0.72rem;
-  color: rgb(120, 120, 120);
-  width: 100%;
-  text-decoration: none;
-  text-align: center;
-}
-
-calcite-carousel-item .attribution b {
-  color: rgb(70, 70, 70);
-}
-
-calcite-carousel-item img {
-  display: block;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
 }
 
 #loading {

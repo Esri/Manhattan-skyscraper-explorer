@@ -27,23 +27,33 @@ import settings from "./settings";
  *******************************************/
 
 export default class Timeline {
-  constructor(container: string, state: State) {
+  constructor(container: string, state: State, onPeriodChange?: (newPeriod: boolean[]) => void) {
+    const updateButtons = (period: boolean[]) => {
+      for (let i = 0; i < period.length; i++) {
+        const buttonStyle = document.getElementById("period-" + i)!.style;
+        buttonStyle.backgroundColor = period[i] ? settings.ageClasses[i].color.toCss() : settings.defaultColor.toCss();
+        buttonStyle.color = period[i] ? "#fff" : "#777";
+      }
+    };
+
     for (let i = 0; i < settings.initPeriod.length; i++) {
+      const buttonIndex = i;
       const button = document.createElement("button");
       button.id = "period-" + i;
       button.innerHTML = settings.ageClasses[i].minValue + " - " + settings.ageClasses[i].maxValue;
       document.getElementById(container)!.appendChild(button);
-      button.addEventListener("click", togglePeriod(i));
-    }
-    function togglePeriod(j: number) {
-      return function () {
+      button.addEventListener("click", () => {
         const newPeriod = [];
         for (let i = 0; i < settings.initPeriod.length; i++) {
-          newPeriod[i] = i !== j ? state.selectedPeriod[i] : !state.selectedPeriod[i];
+          newPeriod[i] = i !== buttonIndex ? state.selectedPeriod[i] : !state.selectedPeriod[i];
         }
         state.selectedPeriod = newPeriod;
-      };
+        updateButtons(newPeriod);
+        onPeriodChange?.(newPeriod);
+      });
     }
+
+    updateButtons(state.selectedPeriod);
   }
 
   update(newPeriod: boolean[]) {

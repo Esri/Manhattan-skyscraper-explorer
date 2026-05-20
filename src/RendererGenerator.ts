@@ -89,7 +89,7 @@ export default class RendererGenerator {
     if (category === "all") {
       renderer.visualVariables = [];
     } else {
-      const field = category === "info" ? "WIKI" : "TOP20";
+      const field = category === "info" ? "WIKI" : "TOP20"; //TODO
       renderer.visualVariables = [
         new OpacityVariable({
           field: field,

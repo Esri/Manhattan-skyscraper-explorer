@@ -42,7 +42,7 @@ export default class HeightGraph {
   circles: d3.Selection<SVGCircleElement, Graphic, SVGSVGElement, unknown>;
   selectContainer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
 
-  constructor(container: string, features: Graphic[], state: State) {
+  constructor(container: string, features: Graphic[], state: State, onFilterChange?: (newFilter: number[]) => void) {
     // general settings for the svg area
     this.width = document.getElementById(container)!.clientWidth;
     this.height = document.getElementById(container)!.clientHeight;
@@ -200,7 +200,9 @@ export default class HeightGraph {
         .select("#lower-indicator")
         .attr("y", e.selection[1] + 15)
         .text(Math.round(yScale.invert(e.selection[1])));
-      state.filteredBuildings = [yScale.invert(e.selection[1]), yScale.invert(e.selection[0])];
+      const newFilter = [yScale.invert(e.selection[1]), yScale.invert(e.selection[0])];
+      state.filteredBuildings = newFilter;
+      onFilterChange?.(newFilter);
     });
     brush.on("end", function (e) {
       svg.select("#upper-indicator").text("");

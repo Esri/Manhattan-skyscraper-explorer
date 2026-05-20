@@ -28,14 +28,12 @@
 import Graphic from "@arcgis/core/Graphic";
 import PopupTemplate from "@arcgis/core/PopupTemplate";
 import Collection from "@arcgis/core/core/Collection";
-import { watch, when } from "@arcgis/core/core/reactiveUtils";
 import Point from "@arcgis/core/geometry/Point";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import FeatureSet from "@arcgis/core/rest/support/FeatureSet";
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
 import SceneView from "@arcgis/core/views/SceneView";
-import SceneLayerView from "@arcgis/core/views/layers/SceneLayerView";
 import LayerSearchSource from "@arcgis/core/widgets/Search/LayerSearchSource";
 import "@arcgis/map-components/components/arcgis-compass";
 import "@arcgis/map-components/components/arcgis-expand";
@@ -66,39 +64,32 @@ const state = new State();
 let buildings: Graphic[];
 let heightGraph: HeightGraph;
 let timeline: Timeline;
-let sceneLayerView: SceneLayerView | null = null;
 
 const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
 await viewElement.viewOnReady();
-
 viewElement.environment.lighting = {
    type: "sun",
    directShadowsEnabled: true,
 };
-
 const view = viewElement.view as SceneView;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
 
 const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
-
-const popupDockOptions = {
+popupElement.dockEnabled = true;
+popupElement.dockOptions = {
   buttonEnabled: false,
   breakpoint: false,
   position: "top-right" as const
 };
 
-popupElement.dockEnabled = true;
-popupElement.dockOptions = popupDockOptions;
 const articleUrlByObjectId = new Map<string, string>();
-
 const buildingPopupTemplate = new PopupTemplate({
   title: "{name}",
   content: async (feature) => {
     const graphic = feature.graphic as Graphic;
     const attributes = graphic.attributes ?? {};
     const position = graphic.geometry as Point | null;
-    const name = attributes.name ?? attributes.NAME ?? "Building";
-    const normalizedName = typeof name === "string" && name.trim() ? name : "Building";
+    const name = attributes.name ?? attributes.NAME ?? "";
     const objectId = String(attributes.objectid ?? attributes.OBJECTID ?? "");
     const height = Math.round(attributes.heightroof ?? attributes.HEIGHTROOF ?? 0);
     const year = attributes.cnstrct_yr ?? attributes.CNSTRCT_YR ?? "-";
@@ -109,8 +100,8 @@ const buildingPopupTemplate = new PopupTemplate({
             <img src='${new URL("construction.png", document.baseURI).toString()}' width="25" height="25"> ${year}
       </p>`;
 
-    if (normalizedName !== "Building") {
-      const wikiResult = await getWikiContent(normalizedName, position);
+    if (typeof name === "string" && name.trim()) {
+      const wikiResult = await getWikiContent(name, position);
       content += wikiResult.extract ?? "";
       if (wikiResult.articleUrl) {
         articleUrlByObjectId.set(objectId, wikiResult.articleUrl);
@@ -120,10 +111,10 @@ const buildingPopupTemplate = new PopupTemplate({
     return content;
   },
   actions: [new ActionButton({
-  title: "Wikipedia",
-  id: "wiki-action",
-  icon: "article"
-})]
+    title: "Wikipedia",
+    id: "wiki-action",
+    icon: "article"
+  })]
 });
 
 popupElement.addEventListener("arcgisTriggerAction", (event) => {
@@ -134,13 +125,14 @@ popupElement.addEventListener("arcgisTriggerAction", (event) => {
   const selectedFeature = popupElement.selectedFeature as Graphic | null;
   const attributes = selectedFeature?.attributes ?? {};
   const objectId = String(attributes.objectid ?? attributes.OBJECTID ?? "");
-  const name = attributes.name ?? attributes.NAME ?? "Building";
-  const normalizedName = typeof name === "string" && name.trim() ? name.trim() : "Building";
+  const name = attributes.name ?? attributes.NAME ?? "";
+  const trimmedName = typeof name === "string" ? name.trim() : "";
+  if (!trimmedName) return;
   const articleUrl =
     articleUrlByObjectId.get(objectId) ||
-    `https://en.wikipedia.org/wiki/${encodeURIComponent(normalizedName)}`;
+    `https://en.wikipedia.org/wiki/${encodeURIComponent(trimmedName)}`;
 
-  window.open(articleUrl, "_blank", "noopener,noreferrer");
+  window.open(articleUrl, "_blank");
 });
 
 // we set an initial filter to display only buildings whose height is between minHeight and maxHeight
@@ -154,14 +146,8 @@ const sceneLayer = new SceneLayer({
   outFields: ["*"],
   definitionExpression: definitionExpression
 });
-view
-  .whenLayerView(sceneLayer)
-  .then((layerView) => {
-        document.getElementById("loading")!.style.display = "none";
-    sceneLayerView = layerView;
-  })
-  .catch(console.error);
 const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
+
 
 // feature layer with centroids of buildings - displayed on top of buildings to show which buildings contain information from wikipedia
 const infoPoints = new FeatureLayer({
@@ -181,6 +167,8 @@ const infoPoints = new FeatureLayer({
 });
 
 view.map!.addMany([sceneLayer, infoPoints]);
+const sceneLayerView = await view.whenLayerView(sceneLayer);
+document.getElementById("loading")!.style.display = "none";
 
 // add labels to display Manhattan boroughs
 labels.initialize("./data/manhattan-boroughs.json", view.map!);
@@ -190,25 +178,36 @@ const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-se
 searchElement.sources = new Collection([
   new LayerSearchSource({
     layer: infoPoints,
-    outFields: ["*"],
+    outFields: ["NAME"],
     searchFields: ["NAME"],
     displayField: "NAME",
     exactMatch: false,
     placeholder: "Ex: Empire State Building"
   })
 ]);
-
-searchElement.addEventListener("arcgisSelectResult", (event) => {
+searchElement.addEventListener("arcgisSelectResult", async (event) => {
   const selectResultEvent = event as CustomEvent<{ result: { feature: Graphic } }>;
   const feature = selectResultEvent.detail.result.feature;
   attributesToLowerCase(feature);
   state.selectedBuilding = feature;
+
+  const sceneQuery = sceneLayer.createQuery();
+  sceneQuery.objectIds = [Number(feature.attributes.objectid)];
+  sceneQuery.returnGeometry = true;
+  const sceneResults = await sceneLayerView.queryFeatures(sceneQuery);
+
+  popupElement.features = [sceneResults.features[0]];
+  popupElement.open = true;
 });
 
 // set up category filter
 const categoryControl = document.querySelector<HTMLCalciteSegmentedControlElement>("calcite-segmented-control")!;
 categoryControl.addEventListener("calciteSegmentedControlChange", () => {
-    state.selectedCategory = categoryControl.value;
+  const newCategory = categoryControl.value;
+  state.selectedCategory = newCategory;
+  rendererGen.applyCategory(newCategory);
+  heightGraph.applyCategory(newCategory);
+  infoPoints.visible = newCategory === "info";
 });
 
 // create a query on the infoPoints layer to get all the buildings that will be displayed in the height graph
@@ -224,91 +223,56 @@ function initGraphics(results: FeatureSet) {
     attributesToLowerCase(results.features[i]);
   }
   buildings = results.features;
-  heightGraph = new HeightGraph("heightDiv", buildings, state);
-  timeline = new Timeline("timeDiv", state);
-  watch(
-    () => state.selectedPeriod,
-    (newPeriod) => {
-      // update building symbology
-      rendererGen.applyClassBreaksRenderer(newPeriod, state);
-      // update height graph
-      heightGraph.updatePeriod(newPeriod);
-      // update timeline
-      timeline.update(newPeriod);
-    },
-    { initial: true }
-  );
-}
-
-// POPUP AND HIGHLIGHTING
-
-// Keep selected building state synced with popup component selected feature
-popupElement.addEventListener("arcgisPropertyChange", async (event) => {
-  const propertyChangeEvent = event as CustomEvent<{ name?: string }>;
-  const changedProperty = propertyChangeEvent.detail?.name;
-
-  if (changedProperty === "open" && !popupElement.open) {
-    heightGraph.deselect();
-    state.selectedBuilding = null;
-    return;
-  }
-
-  if (changedProperty !== "selectedFeature") {
-    return;
-  }
-
-  const selectedFeature = popupElement.selectedFeature as Graphic | null;
-  if (!selectedFeature) {
-    return;
-  }
-
-  const objectid = selectedFeature.attributes.objectid ?? selectedFeature.attributes.OBJECTID;
-  const feature =
-    objectid == null
-      ? null
-      : buildings.find((b) => String(b.attributes.objectid) === String(objectid)) ?? null;
-
-  heightGraph.deselect();
-  if (feature) {
-    heightGraph.select(feature);
-    state.selectedBuilding = feature;
-  }
-
-  if (selectedFeature.geometry) {
-    await view.goTo(selectedFeature.geometry, { duration: 1000 });
-  }
-});
-
-// FILTERS
-when(
-  () => state.filteredBuildings,
-  function (newFilter) {
-    // generate a new definition expression based an the new filter
+  heightGraph = new HeightGraph("heightDiv", buildings, state, (newFilter) => {
     const defExp = generateDefinitionExpression(newFilter);
-    // set the definitionExpression on the buildings and points layers
     sceneLayer.definitionExpression = defExp;
     infoPoints.definitionExpression = defExp;
-    // update the height graph based on the new min and max building heights
     heightGraph.updateFilter(newFilter);
-  }
-);
+  });
+  timeline = new Timeline("timeDiv", state, (newPeriod) => {
+    rendererGen.applyClassBreaksRenderer(newPeriod, state);
+    heightGraph.updatePeriod(newPeriod);
+  });
+  timeline.update(state.selectedPeriod);
+  rendererGen.applyClassBreaksRenderer(state.selectedPeriod, state);
 
-// categories help users visualize the most important buildings
-watch(
-  () => state.selectedCategory,
-  (newCategory) => {
-    rendererGen.applyCategory(newCategory);
-    heightGraph.applyCategory(newCategory);
-    // make info points visible when category "Only annotated buildings" is selected
-    if (newCategory === "info") {
-      infoPoints.visible = true;
-    } else {
-      infoPoints.visible = false;
+  // Keep selected building state synced with popup component selected feature
+  popupElement.addEventListener("arcgisPropertyChange", async (event) => {
+    const propertyChangeEvent = event as CustomEvent<{ name?: string }>;
+    const changedProperty = propertyChangeEvent.detail?.name;
+
+    if (changedProperty === "open" && !popupElement.open) {
+      heightGraph.deselect();
+      state.selectedBuilding = null;
+      return;
     }
-  }
-);
 
+    if (changedProperty !== "selectedFeature") {
+      return;
+    }
 
+    const selectedFeature = popupElement.selectedFeature as Graphic | null;
+    if (!selectedFeature) {
+      return;
+    }
+
+    const objectid = selectedFeature.attributes.objectid ?? selectedFeature.attributes.OBJECTID;
+    const feature =
+      objectid == null
+        ? null
+        : buildings.find((b) => String(b.attributes.objectid) === String(objectid)) ?? null;
+
+    heightGraph.deselect();
+    if (feature) {
+      heightGraph.select(feature);
+      state.selectedBuilding = feature;
+    }
+
+    if (selectedFeature.geometry) {
+      await view.goTo(selectedFeature.geometry, { duration: 1000 });
+    }
+  });
+}
 
 function generateDefinitionExpression(filter: number[]) {
   return (

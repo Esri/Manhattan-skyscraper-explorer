@@ -62,6 +62,5 @@ export default {
   infoPointsUrl:
     "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/ArcGIS/rest/services/Centroids_Manhattan_Information/FeatureServer/0",
   buildingsUrl: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Buildings_Manhattan/SceneServer",
-  maxPhotoCount: 10,
   maxAttributionLength: 50
 };
