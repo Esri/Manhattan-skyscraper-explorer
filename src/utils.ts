@@ -35,17 +35,20 @@ export async function getWikiContent(
   name: string,
   position: Point | null | undefined
 ): Promise<{ extract?: string; articleUrl?: string }> {
-  if (!name || !name.trim()) {
+  const trimmedName = name?.trim();
+  if (!trimmedName) {
     return {};
   }
 
-  const latitude = position?.latitude ?? 0;
-  const longitude = position?.longitude ?? 0;
+  const latitude = position?.latitude;
+  const longitude = position?.longitude;
+  const hasValidPosition = Number.isFinite(latitude) && Number.isFinite(longitude);
+
   const url = new URL("https://en.wikipedia.org/w/api.php");
-  url.search = new URLSearchParams({
+  const params = new URLSearchParams({
     action: "query",
     list: "search",
-    srsearch: name.trim(),
+    srsearch: trimmedName,
     srwhat: "text",
     prop: "extracts|pageimages|imageinfo|pageterms|info",
     exintro: "1",
@@ -53,54 +56,57 @@ export async function getWikiContent(
     exlimit: "20",
     pilimit: "20",
     piprop: "original",
-    generator: "geosearch",
-    ggscoord: `${latitude}|${longitude}`,
-    ggsradius: "200",
-    ggslimit: "20",
     origin: "*",
     format: "json"
-  }).toString();
+  });
+
+  if (hasValidPosition) {
+    params.set("generator", "geosearch");
+    params.set("ggscoord", `${latitude}|${longitude}`);
+    params.set("ggsradius", "200");
+    params.set("ggslimit", "20");
+  }
+
+  url.search = params.toString();
 
   const response = await request(url, {
     responseType: "json"
   });
-  const pages = response.data.query?.pages;
-  const search = response.data.query?.search;
+  const pages = response.data.query?.pages as Record<string, any> | undefined;
+  const search = response.data.query?.search as Array<{ title: string }> | undefined;
 
-  if (pages && search) {
-    let article: any = null;
+  if (!pages) {
+    return {};
+  }
+
+  const pageList: any[] = Object.values(pages);
+  let article: any = null;
+
+  if (search?.length) {
     let i = 0;
     while (!article && i < search.length) {
-      for (const prop in pages) {
-        if (Object.prototype.hasOwnProperty.call(pages, prop) && search[i].title === pages[prop].title) {
-          article = pages[prop];
+      for (const page of pageList) {
+        if (search[i].title === page.title && page.extract) {
+          article = page;
           break;
         }
       }
       i++;
     }
-
-    if (article?.extract) {
-      const extract =
-        article.extract.length > 200
-          ? article.extract.substring(0, article.extract.indexOf(".", 200) + 1)
-          : article.extract;
-      const articleUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(article.title)}`;
-      return { extract, articleUrl };
-    }
   }
 
-  const fallbackTitle = search?.[0]?.title ?? name.trim();
-  const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(fallbackTitle)}`;
-  const summaryResponse = await request(summaryUrl, {
-    responseType: "json"
-  });
-  const extract = summaryResponse.data?.extract;
-  const articleUrl = summaryResponse.data?.content_urls?.desktop?.page;
+  if (!article) {
+    article = pageList.find((page: any) => page?.extract) ?? null;
+  }
 
-  if (!extract && !articleUrl) {
+  if (!article?.extract) {
     return {};
   }
 
+  const extract =
+    article.extract.length > 200
+      ? article.extract.substring(0, article.extract.indexOf(".", 200) + 1)
+      : article.extract;
+  const articleUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(article.title)}`;
   return { extract, articleUrl };
 }

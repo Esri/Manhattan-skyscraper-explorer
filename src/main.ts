@@ -87,7 +87,11 @@ const buildingPopupTemplate = new PopupTemplate({
   title: "{NAME}",
   content: async (feature) => {
     const graphic = feature.graphic as Graphic;
-    const position = graphic.geometry as Point | null;
+    const geometry = graphic.geometry as any;
+    const position =
+      geometry?.type === "point"
+        ? (geometry as Point)
+        : ((geometry?.extent?.center as Point | null | undefined) ?? null);
     const attributes = graphic.attributes ?? {};
     const name = attributes.NAME.trim();
     let content = `
