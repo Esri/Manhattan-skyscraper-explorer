@@ -32,6 +32,9 @@ body {
 :root {
   --app-text: #323232;
   --calcite-color-background: #fff;
+  --calcite-color-brand:#6e6e6e;
+  --calcite-color-brand-press: #949494;
+  --calcite-color-brand-hover: #474747;
 }
 
 h1 {
@@ -45,38 +48,67 @@ a {
   color: rgb(0, 0, 0);
 }
 
+.menu-panel {
+  height: 20rem;
+  overflow-y: hidden;
+}
+
 #timeWrap {
-  margin: 0 5px;
+  --graph-axis-left-offset: 34px;
+  --time-right-extra: 26px;
+  width: 95%;
+  min-width: 70rem;
+  max-width: 150rem;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 5.75rem minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  row-gap: 0.5rem;
 }
 
 #heightDiv {
-  height: 200px;
-  width: 1250px;
-  margin: 0 5px;
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
+  width: 100%;
+  width: 1824px;
+
+  margin: 0;
   transform-origin: left;
 }
 
 #timeDiv {
-  padding-left: 95px;
+  grid-column: 2;
+  grid-row: 2;
+  margin-left: var(--graph-axis-left-offset);
+  width: 1824px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
   transform-origin: left;
 }
 
-svg {
-  height: 100%;
-  overflow: hidden;
+#heightDiv > svg {
+  overflow: visible;
+}
+
+#categoryLabel {
+  grid-column: 1;
+  grid-row: 2;
+  transform: translateY(6px);
 }
 
 button {
   font-family: "Avenir Next", "Helvetica Neue";
   position: relative;
   display: inline-block;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
   box-sizing: border-box;
   -webkit-transition: all 0.05s linear;
   transition: all 0.05s linear;
   cursor: pointer;
-  white-space: nowrap;
   font-size: 1rem;
   line-height: 1.65rem;
   text-align: center;
@@ -85,51 +117,14 @@ button {
   border-radius: 5px;
 }
 
-#timeDiv button {
-  width: 225px;
-  margin-bottom: 10px;
-  margin-left: 5px;
-  margin-right: 3px;
+arcgis-expand .app-info-panel {
+  max-width: 33rem;
+  padding: 1rem;
+  margin: 0 auto;
 }
 
-#logo {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 120px;
-}
-
-#logo img {
-  height: 40px;
-  display: block;
-}
-
-#logo a {
-  font-size: 0.6em;
-  text-align: right;
-  color: rgb(0, 0, 0);
-  text-decoration: none;
-}
-
-calcite-segmented-control {
-  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --calcite-segmented-control-border-color: transparent;
-}
-
-calcite-segmented-control-item {
-text-align: center;
-  margin-top: 12px;
-  padding: 0.25rem;
-  border: 1px solid rgb(150, 150, 150);
-  border-radius: 10px;
-  background-color: rgb(255, 255, 255);
-  --calcite-segmented-control-color: rgb(0, 0, 0);
-  --calcite-segmented-control-background-color: transparent;
-}
-
-calcite-segmented-control-item[checked] {
-  background-color: rgb(230, 230, 230);
-  --calcite-segmented-control-color: rgb(0, 0, 0);
+arcgis-expand .app-info-panel p {
+  margin: 0;
 }
 
 .circle:hover {
@@ -146,19 +141,6 @@ rect.handle--s {
   fill: #bbb;
   stroke: #bbb;
   height: 2px !important;
-}
-
-p.info {
-  font-size: 1rem;
-}
-
-.info img {
-  vertical-align: text-bottom;
-  height: 25px;
-}
-
-.info img:nth-child(2) {
-  margin-left: 20px;
 }
 
 .esri-attribution__sources {
@@ -186,7 +168,6 @@ a {
   right: 0;
   text-align: center;
   background-color: rgba(255, 255, 255, 0.6);
-  /* display: none; */
 }
 
 #loadingInfo {
@@ -202,12 +183,3 @@ path.domain,
   stroke: #fff;
 }
 
-arcgis-expand .app-info-panel {
-  max-width: 33rem;
-  padding: 1rem;
-  margin: 0 auto;
-}
-
-arcgis-expand .app-info-panel p {
-  margin: 0;
-}

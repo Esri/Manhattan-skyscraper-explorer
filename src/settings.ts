@@ -44,23 +44,6 @@ export default {
     maxCnstrctYear: 2024
   },
   initPeriod: [true, true, true, true, true],
-  categories: [
-    {
-      value: "all",
-      text: "Show all buildings"
-    },
-    {
-      value: "info",
-      text: "Only annotated buildings"
-    },
-    {
-      value: "top",
-      text: "Top 20 buildings"
-    }
-  ],
-  initCategory: "all",
-  infoPointsUrl:
-    "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/ArcGIS/rest/services/Centroids_Manhattan_Information/FeatureServer/0",
-  buildingsUrl: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Buildings_Manhattan/SceneServer",
+  buildingsUrl: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Showcase_Manhattan_Buildings/SceneServer",
   maxAttributionLength: 50
 };

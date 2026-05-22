@@ -47,16 +47,11 @@
       <calcite-shell-panel slot="panel-bottom" class="menu-panel">
         <div id="timeWrap">
           <div id="heightDiv"></div>
+          <calcite-label id="categoryLabel" layout="inline">
+            <calcite-checkbox id="categoryCheckbox"></calcite-checkbox>
+            Only annotated
+          </calcite-label>
           <div id="timeDiv"></div>
-          <calcite-segmented-control layout="vertical">
-            <calcite-segmented-control-item value="all" checked> All buildings </calcite-segmented-control-item>
-            <calcite-segmented-control-item value="info"> Annotated buildings </calcite-segmented-control-item>
-            <calcite-segmented-control-item value="top"> Top 20 buildings </calcite-segmented-control-item>
-          </calcite-segmented-control>
-        </div>
-        <div id="logo">
-          <img src="./esri-10GlobeLogo_1C.png" />
-          <a href="https://developers.arcgis.com/javascript/" target="_blank">ArcGIS SDK for JavaScript</a>
         </div>
       </calcite-shell-panel>
 
@@ -64,13 +59,14 @@
         id="viewElement"
         basemap="gray-vector"
         ground="world-elevation"
-        camera-position="-74.026, 40.694, 528"
-        camera-heading="40"
-        camera-tilt="76"
+        camera-position="-74.028, 40.691, 544"
+        camera-heading="38"
+        camera-tilt="79"
         camera-fov="55"
         popup-component-enabled
       >
         <arcgis-popup slot="popup"></arcgis-popup>
+
         <h1 slot="bottom-right"><strong>Manhattan</strong> Skyscraper Explorer</h1>
         <arcgis-search
           slot="top-left"
@@ -81,6 +77,15 @@
         <arcgis-zoom slot="top-left"></arcgis-zoom>
         <arcgis-navigation-toggle slot="top-left"></arcgis-navigation-toggle>
         <arcgis-compass slot="top-left"></arcgis-compass>
+        <arcgis-expand slot="top-left">
+          <arcgis-daylight
+            date-or-season="season"
+            hide-shadows-toggle
+            hide-sun-lighting-toggle
+            hide-timezone
+          ></arcgis-daylight
+        ></arcgis-expand>
+
         <arcgis-expand slot="bottom-left" expand-icon="information-f">
           <calcite-panel class="app-info-panel">
             <h2>Disclaimer</h2>

@@ -36,37 +36,54 @@ export default class HeightGraph {
   width: number;
   height: number;
   paddingLeft: number;
+  paddingRight: number;
   paddingTop: number;
   paddingBottom: number;
 
   circles: d3.Selection<SVGCircleElement, Graphic, SVGSVGElement, unknown>;
   selectContainer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
 
-  constructor(container: string, features: Graphic[], state: State, onFilterChange?: (newFilter: number[]) => void) {
+  constructor(
+    container: string,
+    features: Graphic[],
+    state: State,
+    onFilterChange?: (newFilter: number[]) => void,
+    onBuildingClick?: (feature: Graphic) => void
+  ) {
     // general settings for the svg area
-    this.width = document.getElementById(container)!.clientWidth;
-    this.height = document.getElementById(container)!.clientHeight;
-    this.paddingLeft = 90;
+    this.paddingLeft = 34;
+    this.paddingRight = 52;
     this.paddingTop = 20;
     this.paddingBottom = 15;
+    const containerElement = document.getElementById(container)!;
+    const minWidth = 320;
+    const minHeight = this.paddingTop + this.paddingBottom + 60;
+    this.width = Math.max(containerElement.clientWidth, minWidth);
+    this.height = Math.max(containerElement.clientHeight, minHeight);
 
     // define svg
     const svg = d3
       .select("#" + container)
       .append("svg")
       .attr("height", this.height)
-      .attr("width", this.width + 2);
+      .attr("width", this.width + 2)
+      .attr("viewBox", `0 0 ${this.width + 2} ${this.height}`)
+      .attr("preserveAspectRatio", "none");
 
     // create scales
     const buildingOptions = settings.buildingOptions;
     const xScale = d3
       .scaleLinear()
       .domain([buildingOptions.minCnstrctYear - 1, buildingOptions.maxCnstrctYear])
+      // .range([this.paddingLeft, this.width - this.paddingRight]);
       .range([this.paddingLeft, this.width]);
     const yScale = d3
       .scaleLinear()
       .domain([0, buildingOptions.maxHeight])
       .range([this.height - this.paddingBottom, this.paddingTop]);
+    const graphRightX = this.width - this.paddingRight;
+    const filterHandleWidth = 34;
+    const filterHandleX = graphRightX - filterHandleWidth;
 
     // create axes
     const yAxis = d3
@@ -91,22 +108,31 @@ export default class HeightGraph {
     appendHorizontalLine(this.paddingLeft, 0, 2025, 0);
     appendHorizontalLine(this.paddingLeft, 1408, 2009, 1408);
 
+    // Keep the reference tower scaled by the same y-axis used for building heights.
+    const towerTopFeet = 1500;
+    const towerBottomFeet = 0;
+    const towerWidth = 30;
+    const towerX = this.paddingLeft - 100;
+
     // add image of the building to better understand the vertical height axis
     svg
       .append("image")
       .attr("xlink:href", "./world-trade-center.png")
-      .attr("y", 30)
-      .attr("x", 10)
-      .attr("height", this.height - 43)
-      .attr("width", 25);
+      .attr("x", towerX)
+      .attr("y", yScale(towerTopFeet))
+      .attr("height", yScale(towerBottomFeet) - yScale(towerTopFeet))
+      .attr("width", towerWidth);
 
     // handlers for filtering
     const groupHandlers = svg.append("g");
     groupHandlers
       .append("rect")
       .classed("top", true)
+      // .attr("x", filterHandleX)
       .attr("x", xScale(2020))
+
       .attr("y", yScale(buildingOptions.maxHeight) - 9)
+      // .attr("width", filterHandleWidth)
       .attr("width", 50)
       .attr("height", 6)
       .attr("rx", 5)
@@ -116,8 +142,10 @@ export default class HeightGraph {
     groupHandlers
       .append("rect")
       .classed("bottom", true)
+      // .attr("x", filterHandleX)
       .attr("x", xScale(2020))
       .attr("y", yScale(buildingOptions.minHeight) - 1)
+      // .attr("width", filterHandleWidth)
       .attr("width", 50)
       .attr("height", 6)
       .attr("rx", 5)
@@ -175,6 +203,7 @@ export default class HeightGraph {
       })
       .on("click", function (_e, d) {
         state.selectedBuilding = d;
+        onBuildingClick?.(d);
       });
 
     // add text that shows the height of the buildings that are filtered
@@ -190,8 +219,10 @@ export default class HeightGraph {
 
     // add event listeners when filters are changed
     brush.on("brush", function (e) {
+
       groupHandlers.select("rect.top").attr("y", e.selection[0] - 9);
       groupHandlers.select("rect.bottom").attr("y", e.selection[1] - 1);
+
       svg
         .select("#upper-indicator")
         .attr("y", e.selection[0] - 5)
@@ -219,7 +250,7 @@ export default class HeightGraph {
 
   // add a circle that will act like a highlight when a circle is clicked on
   select(feature: Graphic) {
-    const elem = d3.select("#id-" + feature.attributes.objectid);
+    const elem = d3.select("#id-" + feature.attributes.OBJECTID);
     this.selectContainer
       .append("circle")
       .attr("class", "selectedGraphic")
@@ -261,22 +292,21 @@ export default class HeightGraph {
     });
   }
 
-  // change the size and opacity of points when a category is selected
-  applyCategory(newCategory: string) {
-    if (newCategory === "all") {
+  // change the size and opacity of points when only annotated buildings are selected
+  applyCategory(showOnlyAnnotated: boolean) {
+    if (!showOnlyAnnotated) {
       this.circles.attr("opacity", 1).attr("r", 4);
-    } else {
-      const property = newCategory === "info" ? "wiki" : "top20";
+    } else if (showOnlyAnnotated) {
       this.circles
         .attr("opacity", function (d) {
-          if (d.attributes[property] === 1) {
+          if (d.attributes.wiki === 1) {
             return 1;
           } else {
             return 0.2;
           }
         })
         .attr("r", function (d) {
-          if (d.attributes[property] === 1) {
+          if (d.attributes.wiki === 1) {
             return 4;
           } else {
             return 1;

@@ -26,11 +26,8 @@
 
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
-import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import FillSymbol3DLayer from "@arcgis/core/symbols/FillSymbol3DLayer";
-import IconSymbol3DLayer from "@arcgis/core/symbols/IconSymbol3DLayer";
 import MeshSymbol3D from "@arcgis/core/symbols/MeshSymbol3D";
-import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 
 import OpacityVariable from "@arcgis/core/renderers/visualVariables/OpacityVariable";
 import SolidEdges3D from "@arcgis/core/symbols/edges/SolidEdges3D";
@@ -81,18 +78,17 @@ export default class RendererGenerator {
       classBreakInfos: this.createClassBreakInfos(selectedPeriod)
     });
 
-    this.applyCategory(state.selectedCategory);
+    this.applyCategory(state.showOnlyAnnotated);
   }
 
-  applyCategory(category: string) {
+  applyCategory(showOnlyAnnotated: boolean) {
     const renderer = (this.layer.renderer as ClassBreaksRenderer).clone();
-    if (category === "all") {
+    if (!showOnlyAnnotated) {
       renderer.visualVariables = [];
-    } else {
-      const field = category === "info" ? "WIKI" : "TOP20"; //TODO
+    } else if (showOnlyAnnotated) {
       renderer.visualVariables = [
         new OpacityVariable({
-          field: field,
+          field: "WIKI",
           stops: [
             {
               value: 0,
@@ -107,38 +103,5 @@ export default class RendererGenerator {
       ];
     }
     this.layer.renderer = renderer;
-  }
-
-  createUniqueValueRenderer(field: string, uniqueValueInfo: { value: number; image: string }) {
-    return new UniqueValueRenderer({
-      field: field,
-      uniqueValueInfos: [
-        {
-          value: uniqueValueInfo.value,
-          symbol: new PointSymbol3D({
-            symbolLayers: [
-              new IconSymbol3DLayer({
-                size: 18, // points
-                resource: {
-                  href: uniqueValueInfo.image
-                }
-              })
-            ],
-            verticalOffset: {
-              screenLength: 80,
-              maxWorldLength: 100
-            },
-            callout: {
-              type: "line",
-              size: 1,
-              color: [50, 50, 50],
-              border: {
-                color: [255, 255, 255]
-              }
-            }
-          })
-        }
-      ]
-    });
   }
 }

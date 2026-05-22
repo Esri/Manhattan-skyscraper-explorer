@@ -36,5 +36,5 @@ export class State extends Accessor {
   filteredBuildings: number[] | null = null;
 
   @property()
-  selectedCategory: string = settings.initCategory;
+  showOnlyAnnotated: boolean = false;
 }
