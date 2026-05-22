@@ -177,7 +177,7 @@ export default class HeightGraph {
       .attr("class", function (d) {
         let value;
         settings.ageClasses.forEach(function (e, i) {
-          if (e.minValue <= d.attributes.cnstrct_yr && d.attributes.cnstrct_yr <= e.maxValue) {
+          if (e.minValue <= d.attributes.CNSTRCT_YR && d.attributes.CNSTRCT_YR <= e.maxValue) {
             value = i;
           }
         });
@@ -185,21 +185,21 @@ export default class HeightGraph {
       })
       .classed("circle", true)
       .attr("id", function (d) {
-        return "id-" + d.attributes.objectid;
+        return "id-" + d.attributes.OBJECTID;
       })
       .attr("fill", function (d) {
         const value = settings.ageClasses.filter(function (e) {
-          return e.minValue <= d.attributes.cnstrct_yr && d.attributes.cnstrct_yr <= e.maxValue;
+          return e.minValue <= d.attributes.CNSTRCT_YR && d.attributes.CNSTRCT_YR <= e.maxValue;
         });
         const color = value[0].color.clone();
         color.a = 0.7;
         return color.toCss();
       })
       .attr("cx", function (d) {
-        return xScale(d.attributes.cnstrct_yr);
+        return xScale(d.attributes.CNSTRCT_YR);
       })
       .attr("cy", function (d) {
-        return yScale(d.attributes.heightroof);
+        return yScale(d.attributes.HEIGHTROOF);
       })
       .on("click", function (_e, d) {
         state.selectedBuilding = d;
@@ -284,7 +284,7 @@ export default class HeightGraph {
   // set display:none to circles when the corresponding buildings are filtered out
   updateFilter(newFilter: number[]) {
     this.circles.attr("display", function (d) {
-      if (d.attributes.heightroof < newFilter[0] || d.attributes.heightroof > newFilter[1]) {
+      if (d.attributes.HEIGHTROOF < newFilter[0] || d.attributes.HEIGHTROOF > newFilter[1]) {
         return "none";
       } else {
         return "inline";
@@ -294,19 +294,24 @@ export default class HeightGraph {
 
   // change the size and opacity of points when only annotated buildings are selected
   applyCategory(showOnlyAnnotated: boolean) {
+    const hasName = (d: Graphic) => {
+      const name = d.attributes?.NAME;
+      return typeof name === "string" ? name.trim().length > 0 : Boolean(name);
+    };
+
     if (!showOnlyAnnotated) {
       this.circles.attr("opacity", 1).attr("r", 4);
     } else if (showOnlyAnnotated) {
       this.circles
         .attr("opacity", function (d) {
-          if (d.attributes.wiki === 1) {
+          if (hasName(d)) {
             return 1;
           } else {
             return 0.2;
           }
         })
         .attr("r", function (d) {
-          if (d.attributes.wiki === 1) {
+          if (hasName(d)) {
             return 4;
           } else {
             return 1;

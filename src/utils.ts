@@ -18,18 +18,8 @@
 
    limitations under the License.*/
 
-import Graphic from "@arcgis/core/Graphic";
 import Point from "@arcgis/core/geometry/Point";
 import request from "@arcgis/core/request";
-
-// convert all property names of an object to lower case
-export function attributesToLowerCase(feature: Graphic) {
-  const result: (typeof feature)["attributes"] = {};
-  for (const key of Object.keys(feature.attributes)) {
-    result[key.toLowerCase()] = feature.attributes[key];
-  }
-  feature.attributes = result;
-}
 
 export async function getWikiContent(
   name: string,
