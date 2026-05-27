@@ -28,6 +28,7 @@
 import Graphic from "@arcgis/core/Graphic";
 import PopupTemplate from "@arcgis/core/PopupTemplate";
 import Collection from "@arcgis/core/core/Collection";
+import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
 import Point from "@arcgis/core/geometry/Point";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
@@ -61,6 +62,8 @@ let buildings: Graphic[];
 let heightGraph: HeightGraph;
 let timeline: Timeline;
 
+
+// --- VIEW SETTINGS ---
 const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
 await viewElement.viewOnReady();
 viewElement.environment.lighting = {
@@ -71,13 +74,10 @@ viewElement.environment.lighting = {
 const view = viewElement.view as SceneView;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
 
-const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
-popupElement.dockEnabled = true;
-popupElement.dockOptions = {
-  buttonEnabled: false,
-  breakpoint: false,
-  position: "top-right" as const
-};
+
+// --- LAYERS SETTINGS ---
+// set up labels to display Manhattan boroughs
+labels.initialize("./data/manhattan-boroughs.json", view.map!);
 
 // set an initial filter to display only buildings whose height is between minHeight and maxHeight
 const filter = [settings.buildingOptions.minHeight, settings.buildingOptions.maxHeight];
@@ -94,93 +94,36 @@ view.map!.add(sceneLayer);
 await view.whenLayerView(sceneLayer);
 document.getElementById("loading")!.style.display = "none";
 
-// add labels to display Manhattan boroughs
-labels.initialize("./data/manhattan-boroughs.json", view.map!);
 
-// set up Search Component
-const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
-searchElement.sources = new Collection([
-  new LayerSearchSource({
-    layer: sceneLayer,
-    outFields: ["NAME"],
-    searchFields: ["NAME"],
-    displayField: "NAME",
-    exactMatch: false,
-    placeholder: "Ex: Empire State Building"
-  })
-]);
-searchElement.addEventListener("arcgisSelectResult", async (event) => {
-  const selectResultEvent = event as CustomEvent<{ result: { feature: Graphic } }>;
-  const feature = selectResultEvent.detail.result.feature;
-  popupElement.features = [feature];
-  popupElement.open = true;
+// --- POPUP SETTINGS ---
+const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
+popupElement.dockEnabled = true;
+popupElement.dockOptions = {
+  buttonEnabled: false,
+  breakpoint: false,
+  position: "top-right" as const
+};
+
+// sync popup component with selected building state and camera position
+reactiveUtils.watch(() => popupElement.selectedFeature, async (graphic) => {
+  if (graphic) {
+    heightGraph.deselect();
+    heightGraph.select(graphic);
+    state.selectedBuilding = graphic;
+    if (graphic.geometry) {
+      await view.goTo(graphic.geometry, { duration: 1000 });
+    }
+  }
 });
 
-// set up annotation filter
-const categoryCheckbox = document.querySelector<HTMLCalciteCheckboxElement>("#categoryCheckbox")!;
-categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
-  state.showOnlyAnnotated = categoryCheckbox.checked;
-  rendererGen.applyCategory(state.showOnlyAnnotated);
-  heightGraph.applyCategory(state.showOnlyAnnotated);
+reactiveUtils.watch(() => popupElement.open, (isOpen) => {
+  if (!isOpen) {
+    heightGraph.deselect();
+    state.selectedBuilding = null;    
+  }
 });
 
-// create a query on the layer to get all the buildings that will be displayed in the height graph
-const query = sceneLayer.createQuery();
-query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
-query.returnGeometry = true;
-try {
-  const results = await sceneLayer.queryFeatures(query);
-
-  buildings = results.features;
-  heightGraph = new HeightGraph("heightDiv", buildings, state, (newFilter) => {
-    sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
-    heightGraph.updateFilter(newFilter);
-  }, (feature) => {
-    heightGraph.deselect();
-    heightGraph.select(feature);
-    popupElement.features = [feature];
-    popupElement.open = true;
-  });
-  timeline = new Timeline("timeDiv", state, (newPeriod) => {
-    rendererGen.applyClassBreaksRenderer(newPeriod, state);
-    heightGraph.updatePeriod(newPeriod);
-  });
-  timeline.update(state.selectedPeriod);
-  rendererGen.applyClassBreaksRenderer(state.selectedPeriod, state);
-  heightGraph.applyCategory(state.showOnlyAnnotated);
-
-  // Keep selected building state synced with popup component selected feature
-  popupElement.addEventListener("arcgisPropertyChange", async (event) => {
-    const propertyChangeEvent = event as CustomEvent<{ name?: string }>;
-    const changedProperty = propertyChangeEvent.detail?.name;
-
-    if (changedProperty === "open" && !popupElement.open) {
-      heightGraph.deselect();
-      state.selectedBuilding = null;
-      return;
-    }
-
-    if (changedProperty !== "selectedFeature") {
-      return;
-    }
-
-    const selectedFeature = popupElement.selectedFeature as Graphic | null;
-    if (!selectedFeature) {
-      return;
-    }
-
-    heightGraph.deselect();
-    heightGraph.select(selectedFeature);
-    state.selectedBuilding = selectedFeature;
-
-    if (selectedFeature.geometry) {
-      await view.goTo(selectedFeature.geometry, { duration: 1000 });
-    }
-  });
-} catch (error) {
-  console.error(error);
-}
-
+// set up popup template for the scene layer
 const articleUrlByObjectId = new Map<string, string>();
 const buildingPopupTemplate = new PopupTemplate({
   title: "{NAME}",
@@ -217,21 +160,87 @@ const buildingPopupTemplate = new PopupTemplate({
 });
 
 popupElement.addEventListener("arcgisTriggerAction", (event) => {
-  if (event.detail?.action?.id !== "wiki-action") {
-    return;
-  }
-  const selectedFeature = popupElement.selectedFeature as Graphic | null;
-  const attributes = selectedFeature?.attributes ?? {};
-  const name = attributes.NAME.trim();
-  if (!name) return;
-  const articleUrl =
+  if (event.detail?.action?.id === "wiki-action") {
+    const selectedFeature = popupElement.selectedFeature as Graphic | null;
+    const attributes = selectedFeature?.attributes ?? {};
+    const name = attributes.NAME.trim();
+    if (!name) return;
+    const articleUrl =
     articleUrlByObjectId.get(String(attributes.OBJECTID)) ||
     `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
-
-  window.open(articleUrl, "_blank");
+    window.open(articleUrl, "_blank");
+  }
 });
 sceneLayer.popupTemplate = buildingPopupTemplate;
 
+
+// --- SEARCH SETTINGS ---
+const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
+searchElement.sources = new Collection([
+  new LayerSearchSource({
+    layer: sceneLayer,
+    outFields: ["NAME"],
+    searchFields: ["NAME"],
+    displayField: "NAME",
+    exactMatch: false,
+    placeholder: "Ex: Empire State Building"
+  })
+]);
+searchElement.addEventListener("arcgisSelectResult", async (event) => {
+  popupElement.features = [event.detail.result.feature];
+  popupElement.open = true;
+});
+
+
+// --- HEIGHT GRAPH SETTINGS ---
+try {
+  buildings = await queryAllBuildings();
+  heightGraph = new HeightGraph("heightDiv", buildings, state, (newFilter) => {
+    sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
+    heightGraph.updateFilter(newFilter);
+  }, (feature) => {
+    heightGraph.deselect();
+    heightGraph.select(feature);
+    popupElement.features = [feature];
+    popupElement.open = true;
+  });
+  timeline = new Timeline("timeDiv", state, (newPeriod) => {
+    rendererGen.applyClassBreaksRenderer(newPeriod, state);
+    heightGraph.updatePeriod(newPeriod);
+  });
+  timeline.update(state.selectedPeriod);
+  rendererGen.applyClassBreaksRenderer(state.selectedPeriod, state);
+  heightGraph.applyCategory(state.showOnlyAnnotated);
+} catch (error) {
+  console.error(error);
+}
+
+// TODO: delete after cutting some buildings
+async function queryAllBuildings() {
+  const objectIdQuery = sceneLayer.createQuery();
+  const objectIds = await sceneLayer.queryObjectIds(objectIdQuery);
+  const batchSize = 1000;
+  const buildingFeatures: Graphic[] = [];
+
+  for (let index = 0; index < objectIds.length; index += batchSize) {
+    const query = sceneLayer.createQuery();
+    query.objectIds = objectIds.slice(index, index + batchSize);
+    query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
+    query.returnGeometry = true;
+
+    const results = await sceneLayer.queryFeatures(query);
+    buildingFeatures.push(...results.features);
+  }
+
+  return buildingFeatures;
+}
+
+const categoryCheckbox = document.querySelector<HTMLCalciteCheckboxElement>("#categoryCheckbox")!;
+categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
+  state.showOnlyAnnotated = categoryCheckbox.checked;
+  rendererGen.applyCategory(state.showOnlyAnnotated);
+  heightGraph.applyCategory(state.showOnlyAnnotated);
+});
 
 function generateDefinitionExpression(filter: number[]) {
   return (
