@@ -19,7 +19,29 @@
    limitations under the License.*/
 
 import Point from "@arcgis/core/geometry/Point";
+import Graphic from "@arcgis/core/Graphic";
 import request from "@arcgis/core/request";
+
+export function getName(graphic: Graphic | null | undefined) {
+  const name = graphic?.attributes?.NAME;
+  return typeof name === "string" ? name.trim() : "";
+}
+
+export function hasName(graphic: Graphic | null | undefined) {
+  return getName(graphic).length > 0;
+}
+
+export function generateDefinitionExpression(filter: number[]) {
+  return (
+    "HEIGHTROOF > " +
+    filter[0] +
+    " AND " +
+    "HEIGHTROOF < " +
+    filter[1] +
+    " AND " +
+    "CNSTRCT_YR >= 1900 AND CNSTRCT_YR <= 2024"
+  );
+}
 
 export async function getWikiContent(
   name: string,

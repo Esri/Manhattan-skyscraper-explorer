@@ -25,6 +25,7 @@
  **********************************/
 
 import Map from "@arcgis/core/Map";
+import Graphic from "@arcgis/core/Graphic";
 import Point from "@arcgis/core/geometry/Point";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
@@ -40,12 +41,12 @@ export function initialize(url: string, map: Map) {
   request(url, {
     responseType: "json"
   }).then(function (response) {
-    const featureCollection = [];
+    const featureCollection: Graphic[] = [];
 
     for (let i = 0; i < response.data.features.length; i++) {
       var feat = response.data.features[i];
 
-      featureCollection.push({
+      featureCollection.push(new Graphic({
         geometry: new Point({
           x: feat.geometry.coordinates[0],
           y: feat.geometry.coordinates[1],
@@ -55,7 +56,7 @@ export function initialize(url: string, map: Map) {
           OBJECTID: feat.properties.FID,
           Name: feat.properties.Name
         }
-      });
+      }));
     }
 
     const labelsLayer = new FeatureLayer({

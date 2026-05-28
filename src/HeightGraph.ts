@@ -25,6 +25,7 @@ import Graphic from "@arcgis/core/Graphic";
 
 import settings from "./settings";
 import { State } from "./State";
+import { hasName } from "./utils";
 
 /**
  * This class builds the graph that displays
@@ -251,6 +252,9 @@ export default class HeightGraph {
   // add a circle that will act like a highlight when a circle is clicked on
   select(feature: Graphic) {
     const elem = d3.select("#id-" + feature.attributes.OBJECTID);
+    if (elem.empty()) {
+      return;
+    }
     this.selectContainer
       .append("circle")
       .attr("class", "selectedGraphic")
@@ -294,11 +298,6 @@ export default class HeightGraph {
 
   // change the size and opacity of points when only annotated buildings are selected
   applyCategory(showOnlyAnnotated: boolean) {
-    const hasName = (d: Graphic) => {
-      const name = d.attributes?.NAME;
-      return typeof name === "string" ? name.trim().length > 0 : Boolean(name);
-    };
-
     if (!showOnlyAnnotated) {
       this.circles.attr("opacity", 1).attr("r", 4);
     } else if (showOnlyAnnotated) {

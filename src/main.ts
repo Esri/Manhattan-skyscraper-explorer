@@ -54,7 +54,10 @@ import Timeline from "./Timeline";
 import * as labels from "./labels";
 import settings from "./settings";
 import {
-  getWikiContent
+  generateDefinitionExpression,
+  getName,
+  getWikiContent,
+  hasName
 } from "./utils";
 
 const state = new State();
@@ -91,7 +94,8 @@ const sceneLayer = new SceneLayer({
 const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
 
 view.map!.add(sceneLayer);
-await view.whenLayerView(sceneLayer);
+const sceneLayerView = await view.whenLayerView(sceneLayer);
+await reactiveUtils.whenOnce(() => !sceneLayerView.updating);
 document.getElementById("loading")!.style.display = "none";
 
 
@@ -135,7 +139,7 @@ const buildingPopupTemplate = new PopupTemplate({
         ? (geometry as Point)
         : ((geometry?.extent?.center as Point | null | undefined) ?? null);
     const attributes = graphic.attributes ?? {};
-    const name = attributes.NAME.trim();
+    const name = getName(graphic);
     let content = `
       <p class='info'>
         <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(attributes.HEIGHTROOF)} feet
@@ -163,7 +167,7 @@ popupElement.addEventListener("arcgisTriggerAction", (event) => {
   if (event.detail?.action?.id === "wiki-action") {
     const selectedFeature = popupElement.selectedFeature as Graphic | null;
     const attributes = selectedFeature?.attributes ?? {};
-    const name = attributes.NAME.trim();
+    const name = getName(selectedFeature);
     if (!name) return;
     const articleUrl =
     articleUrlByObjectId.get(String(attributes.OBJECTID)) ||
@@ -194,11 +198,25 @@ searchElement.addEventListener("arcgisSelectResult", async (event) => {
 
 // --- HEIGHT GRAPH SETTINGS ---
 try {
-  buildings = await queryAllBuildings();
+  const objectIdQuery = sceneLayer.createQuery();
+  objectIdQuery.where = "NAME IS NOT NULL";
+  const objectIds = await sceneLayer.queryObjectIds(objectIdQuery);
+  const batchSize = 100;
+  buildings = [];
+
+  for (let index = 0; index < objectIds.length; index += batchSize) {
+    const query = sceneLayer.createQuery();
+    query.objectIds = objectIds.slice(index, index + batchSize);
+    query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
+    query.returnGeometry = false;
+    const results = await sceneLayer.queryFeatures(query);
+    buildings.push(...results.features.filter(hasName));
+  }
+
   heightGraph = new HeightGraph("heightDiv", buildings, state, (newFilter) => {
     sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
     heightGraph.updateFilter(newFilter);
-  }, (feature) => {
+  }, async (feature) => {
     heightGraph.deselect();
     heightGraph.select(feature);
     popupElement.features = [feature];
@@ -215,26 +233,6 @@ try {
   console.error(error);
 }
 
-// TODO: delete after cutting some buildings
-async function queryAllBuildings() {
-  const objectIdQuery = sceneLayer.createQuery();
-  const objectIds = await sceneLayer.queryObjectIds(objectIdQuery);
-  const batchSize = 1000;
-  const buildingFeatures: Graphic[] = [];
-
-  for (let index = 0; index < objectIds.length; index += batchSize) {
-    const query = sceneLayer.createQuery();
-    query.objectIds = objectIds.slice(index, index + batchSize);
-    query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
-    query.returnGeometry = true;
-
-    const results = await sceneLayer.queryFeatures(query);
-    buildingFeatures.push(...results.features);
-  }
-
-  return buildingFeatures;
-}
-
 const categoryCheckbox = document.querySelector<HTMLCalciteCheckboxElement>("#categoryCheckbox")!;
 categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
   state.showOnlyAnnotated = categoryCheckbox.checked;
@@ -242,14 +240,3 @@ categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
   heightGraph.applyCategory(state.showOnlyAnnotated);
 });
 
-function generateDefinitionExpression(filter: number[]) {
-  return (
-    "HEIGHTROOF > " +
-    filter[0] +
-    " AND " +
-    "HEIGHTROOF < " +
-    filter[1] +
-    " AND " +
-    "CNSTRCT_YR >= 1900 AND CNSTRCT_YR <= 2024"
-  );
-}
