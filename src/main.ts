@@ -29,6 +29,7 @@ import Graphic from "@arcgis/core/Graphic";
 import PopupTemplate from "@arcgis/core/PopupTemplate";
 import Collection from "@arcgis/core/core/Collection";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
+import Extent from "@arcgis/core/geometry/Extent";
 import Point from "@arcgis/core/geometry/Point";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
@@ -206,38 +207,50 @@ searchElement.addEventListener("arcgisSelectResult", async (event) => {
   popupElement.open = true;
 });
 
+const FEET_TO_METERS = 0.3048;
+
 // Frame a building's full 3D extent when it's selected from the height graph.
-// A SceneLayer feature query only returns the flat 2D footprint (hasZ: false), so
-// view.goTo on that geometry frames just the base. The true 3D bounding box comes
-// from the layer view's queryExtent — but that only resolves once the building's
-// mesh tiles have streamed in, which won't happen while it's off-screen. So first
-// move the camera to the footprint (bringing the building into view to load its
-// tiles), then poll queryExtent until the 3D extent is available and frame that.
+// A SceneLayer feature query only returns the flat 2D footprint (hasZ: false), and
+// the layer view's queryExtent only works once the building's mesh has streamed in —
+// which forced an ugly "reposition to load, then frame" two-step on the first click.
+// Instead we build the 3D box ourselves: x/y from the footprint, and z from the
+// GROUNDELEV / HEIGHTROOF attributes (stored in feet, the scene is in meters). That
+// needs no loaded tiles, so it's a single smooth tilted fly-in every time.
 async function frameBuilding(objectId: number) {
   const footprintQuery = sceneLayer.createQuery();
   footprintQuery.objectIds = [objectId];
+  footprintQuery.outFields = ["GROUNDELEV", "HEIGHTROOF"];
   footprintQuery.returnGeometry = true;
+  footprintQuery.outSpatialReference = view.spatialReference;
   const { features } = await sceneLayer.queryFeatures(footprintQuery);
-  const footprint = features[0]?.geometry;
-  if (footprint) {
-    await view.goTo(footprint, { duration: 1000 });
+  const feature = features[0];
+  const footprint = feature?.geometry?.extent;
+  if (!footprint) {
+    return;
   }
 
-  const extentQuery = sceneLayerView.createQuery();
-  extentQuery.objectIds = [objectId];
-  for (let attempt = 0; attempt < 15; attempt++) {
-    // Race the extent query against a timeout so a building whose mesh hasn't
-    // streamed in yet can't stall the camera indefinitely; retry on the next tick.
-    const result = await Promise.race([
-      sceneLayerView.queryExtent(extentQuery),
-      new Promise<{ extent: null }>((resolve) => setTimeout(() => resolve({ extent: null }), 1500))
-    ]);
-    if (result.extent) {
-      await view.goTo({ target: result.extent.expand(2), tilt: 60 }, { duration: 1000 });
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
+  const ground = (feature.attributes.GROUNDELEV ?? 0) * FEET_TO_METERS;
+  const roof = (feature.attributes.HEIGHTROOF ?? 0) * FEET_TO_METERS;
+
+  // goTo sizes the camera distance from the horizontal span of the target, not its
+  // height — so for a thin, supertall tower a footprint-sized frame sits too close
+  // and clips the top. Grow the horizontal frame with the building height so the
+  // camera pulls back far enough to fit the whole tower. Short buildings stay
+  // governed by their footprint (the ~3x margin that framed nicely before).
+  const center = footprint.center;
+  const footprintRadius = Math.max(footprint.width, footprint.height) / 2;
+  const radius = Math.max(footprintRadius * 3, roof * 0.9);
+  const target = new Extent({
+    xmin: center.x - radius,
+    xmax: center.x + radius,
+    ymin: center.y - radius,
+    ymax: center.y + radius,
+    zmin: ground,
+    zmax: ground + roof,
+    spatialReference: view.spatialReference
+  });
+
+  await view.goTo({ target, tilt: 60 }, { duration: 1500 });
 }
 
 // --- HEIGHT GRAPH SETTINGS ---
