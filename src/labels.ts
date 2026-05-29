@@ -90,7 +90,6 @@ export function initialize(url: string, map: Map) {
                 material: {
                   color: "white"
                 },
-                text: feat.properties.Name,
                 font: {
                   family: "sans-serif",
                   weight: "bold"

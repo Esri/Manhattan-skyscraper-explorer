@@ -206,6 +206,40 @@ searchElement.addEventListener("arcgisSelectResult", async (event) => {
   popupElement.open = true;
 });
 
+// Frame a building's full 3D extent when it's selected from the height graph.
+// A SceneLayer feature query only returns the flat 2D footprint (hasZ: false), so
+// view.goTo on that geometry frames just the base. The true 3D bounding box comes
+// from the layer view's queryExtent — but that only resolves once the building's
+// mesh tiles have streamed in, which won't happen while it's off-screen. So first
+// move the camera to the footprint (bringing the building into view to load its
+// tiles), then poll queryExtent until the 3D extent is available and frame that.
+async function frameBuilding(objectId: number) {
+  const footprintQuery = sceneLayer.createQuery();
+  footprintQuery.objectIds = [objectId];
+  footprintQuery.returnGeometry = true;
+  const { features } = await sceneLayer.queryFeatures(footprintQuery);
+  const footprint = features[0]?.geometry;
+  if (footprint) {
+    await view.goTo(footprint, { duration: 1000 });
+  }
+
+  const extentQuery = sceneLayerView.createQuery();
+  extentQuery.objectIds = [objectId];
+  for (let attempt = 0; attempt < 15; attempt++) {
+    // Race the extent query against a timeout so a building whose mesh hasn't
+    // streamed in yet can't stall the camera indefinitely; retry on the next tick.
+    const result = await Promise.race([
+      sceneLayerView.queryExtent(extentQuery),
+      new Promise<{ extent: null }>((resolve) => setTimeout(() => resolve({ extent: null }), 1500))
+    ]);
+    if (result.extent) {
+      await view.goTo({ target: result.extent.expand(2), tilt: 60 }, { duration: 1000 });
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+}
+
 // --- HEIGHT GRAPH SETTINGS ---
 try {
   // The height graph only needs the tallest buildings (>= 200 ft), which matches
@@ -237,6 +271,7 @@ try {
       heightGraph.select(feature);
       popupElement.features = [feature];
       popupElement.open = true;
+      await frameBuilding(feature.attributes.OBJECTID);
     }
   );
   timeline = new Timeline("timeDiv", state, (newPeriod) => {
