@@ -36,5 +36,5 @@ export class State extends Accessor {
   filteredBuildings: number[] | null = null;
 
   @property()
-  showOnlyAnnotated: boolean = false;
+  showOnlyAnnotated = false;
 }

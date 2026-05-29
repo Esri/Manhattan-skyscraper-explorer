@@ -88,8 +88,7 @@ export default class RendererGenerator {
     } else if (showOnlyAnnotated) {
       renderer.visualVariables = [
         new OpacityVariable({
-          valueExpression:
-          "IIf(IsEmpty(Trim(DefaultValue($feature.NAME, ''))), 0, 1)",
+          valueExpression: "IIf(IsEmpty(Trim(DefaultValue($feature.NAME, ''))), 0, 1)",
           stops: [
             {
               value: 0,

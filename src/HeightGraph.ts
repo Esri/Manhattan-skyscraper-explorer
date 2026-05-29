@@ -220,7 +220,6 @@ export default class HeightGraph {
 
     // add event listeners when filters are changed
     brush.on("brush", function (e) {
-
       groupHandlers.select("rect.top").attr("y", e.selection[0] - 9);
       groupHandlers.select("rect.bottom").attr("y", e.selection[1] - 1);
 

@@ -44,19 +44,21 @@ export function initialize(url: string, map: Map) {
     const featureCollection: Graphic[] = [];
 
     for (let i = 0; i < response.data.features.length; i++) {
-      var feat = response.data.features[i];
+      const feat = response.data.features[i];
 
-      featureCollection.push(new Graphic({
-        geometry: new Point({
-          x: feat.geometry.coordinates[0],
-          y: feat.geometry.coordinates[1],
-          z: 0
-        }),
-        attributes: {
-          OBJECTID: feat.properties.FID,
-          Name: feat.properties.Name
-        }
-      }));
+      featureCollection.push(
+        new Graphic({
+          geometry: new Point({
+            x: feat.geometry.coordinates[0],
+            y: feat.geometry.coordinates[1],
+            z: 0
+          }),
+          attributes: {
+            OBJECTID: feat.properties.FID,
+            Name: feat.properties.Name
+          }
+        })
+      );
     }
 
     const labelsLayer = new FeatureLayer({

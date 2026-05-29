@@ -53,30 +53,23 @@ import { State } from "./State";
 import Timeline from "./Timeline";
 import * as labels from "./labels";
 import settings from "./settings";
-import {
-  generateDefinitionExpression,
-  getName,
-  getWikiContent,
-  hasName
-} from "./utils";
+import { generateDefinitionExpression, getName, getWikiContent } from "./utils";
 
 const state = new State();
 let buildings: Graphic[];
 let heightGraph: HeightGraph;
 let timeline: Timeline;
 
-
 // --- VIEW SETTINGS ---
 const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
 await viewElement.viewOnReady();
 viewElement.environment.lighting = {
-   type: "sun",
-   directShadowsEnabled: true,
-   date: new Date("May 21, 2021 03:30:00 GMT-05:00")
+  type: "sun",
+  directShadowsEnabled: true,
+  date: new Date("May 21, 2021 03:30:00 GMT-05:00")
 };
 const view = viewElement.view as SceneView;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
-
 
 // --- LAYERS SETTINGS ---
 // set up labels to display Manhattan boroughs
@@ -95,9 +88,18 @@ const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
 
 view.map!.add(sceneLayer);
 const sceneLayerView = await view.whenLayerView(sceneLayer);
-await reactiveUtils.whenOnce(() => !sceneLayerView.updating);
-document.getElementById("loading")!.style.display = "none";
 
+// Hide the loading overlay once the buildings have finished rendering, but
+// don't block app initialization on it: on software-rendering setups (e.g. WSL)
+// the layer view's `updating` flag can take tens of seconds to settle, which
+// would otherwise stall the data query and chart below indefinitely.
+const loadingElement = document.getElementById("loading")!;
+Promise.race([
+  reactiveUtils.whenOnce(() => !sceneLayerView.updating),
+  new Promise((resolve) => setTimeout(resolve, 5000))
+]).then(() => {
+  loadingElement.style.display = "none";
+});
 
 // --- POPUP SETTINGS ---
 const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
@@ -109,23 +111,29 @@ popupElement.dockOptions = {
 };
 
 // sync popup component with selected building state and camera position
-reactiveUtils.watch(() => popupElement.selectedFeature, async (graphic) => {
-  if (graphic) {
-    heightGraph.deselect();
-    heightGraph.select(graphic);
-    state.selectedBuilding = graphic;
-    if (graphic.geometry) {
-      await view.goTo(graphic.geometry, { duration: 1000 });
+reactiveUtils.watch(
+  () => popupElement.selectedFeature,
+  async (graphic) => {
+    if (graphic) {
+      heightGraph?.deselect();
+      heightGraph?.select(graphic);
+      state.selectedBuilding = graphic;
+      if (graphic.geometry) {
+        await view.goTo(graphic.geometry, { duration: 1000 });
+      }
     }
   }
-});
+);
 
-reactiveUtils.watch(() => popupElement.open, (isOpen) => {
-  if (!isOpen) {
-    heightGraph.deselect();
-    state.selectedBuilding = null;    
+reactiveUtils.watch(
+  () => popupElement.open,
+  (isOpen) => {
+    if (!isOpen) {
+      heightGraph?.deselect();
+      state.selectedBuilding = null;
+    }
   }
-});
+);
 
 // set up popup template for the scene layer
 const articleUrlByObjectId = new Map<string, string>();
@@ -135,15 +143,17 @@ const buildingPopupTemplate = new PopupTemplate({
     const graphic = feature.graphic as Graphic;
     const geometry = graphic.geometry as any;
     const position =
-      geometry?.type === "point"
-        ? (geometry as Point)
-        : ((geometry?.extent?.center as Point | null | undefined) ?? null);
+      geometry?.type === "point" ? (geometry as Point) : (geometry?.extent?.center as Point | null | undefined) ?? null;
     const attributes = graphic.attributes ?? {};
     const name = getName(graphic);
     let content = `
       <p class='info'>
-        <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(attributes.HEIGHTROOF)} feet
-        <img src='${new URL("construction.png", document.baseURI).toString()}' width="25" height="25"> ${attributes.CNSTRCT_YR}
+        <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(
+      attributes.HEIGHTROOF
+    )} feet
+        <img src='${new URL("construction.png", document.baseURI).toString()}' width="25" height="25"> ${
+      attributes.CNSTRCT_YR
+    }
       </p>`;
 
     if (name) {
@@ -156,11 +166,13 @@ const buildingPopupTemplate = new PopupTemplate({
 
     return content;
   },
-  actions: [new ActionButton({
-    title: "Wikipedia",
-    id: "wiki-action",
-    icon: "article"
-  })]
+  actions: [
+    new ActionButton({
+      title: "Wikipedia",
+      id: "wiki-action",
+      icon: "article"
+    })
+  ]
 });
 
 popupElement.addEventListener("arcgisTriggerAction", (event) => {
@@ -170,13 +182,12 @@ popupElement.addEventListener("arcgisTriggerAction", (event) => {
     const name = getName(selectedFeature);
     if (!name) return;
     const articleUrl =
-    articleUrlByObjectId.get(String(attributes.OBJECTID)) ||
-    `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
+      articleUrlByObjectId.get(String(attributes.OBJECTID)) ||
+      `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
     window.open(articleUrl, "_blank");
   }
 });
 sceneLayer.popupTemplate = buildingPopupTemplate;
-
 
 // --- SEARCH SETTINGS ---
 const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
@@ -195,33 +206,39 @@ searchElement.addEventListener("arcgisSelectResult", async (event) => {
   popupElement.open = true;
 });
 
-
 // --- HEIGHT GRAPH SETTINGS ---
 try {
-  const objectIdQuery = sceneLayer.createQuery();
-  objectIdQuery.where = "NAME IS NOT NULL";
-  const objectIds = await sceneLayer.queryObjectIds(objectIdQuery);
-  const batchSize = 100;
-  buildings = [];
+  // The height graph only needs the tallest buildings (>= 200 ft), which matches
+  // the curated ~1,800-feature set the app was originally built around. That count
+  // stays under the service's maxRecordCount (2000), so it loads in a single query
+  // instead of hundreds of sequential batches over all ~45,000 buildings.
+  const { minCnstrctYear, maxCnstrctYear } = settings.buildingOptions;
+  const query = sceneLayer.createQuery();
+  // Only buildings with a valid construction year are plotted (the graph is
+  // year-vs-height, and the color scale only covers the configured year range).
+  query.where = `HEIGHTROOF >= 200 AND CNSTRCT_YR >= ${minCnstrctYear} AND CNSTRCT_YR <= ${maxCnstrctYear}`;
+  query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
+  query.returnGeometry = false;
+  const results = await sceneLayer.queryFeatures(query);
+  // Keep every tall building (named or not); the "Only annotated" toggle dims the
+  // unnamed ones via HeightGraph.applyCategory rather than removing them here.
+  buildings = results.features;
 
-  for (let index = 0; index < objectIds.length; index += batchSize) {
-    const query = sceneLayer.createQuery();
-    query.objectIds = objectIds.slice(index, index + batchSize);
-    query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
-    query.returnGeometry = false;
-    const results = await sceneLayer.queryFeatures(query);
-    buildings.push(...results.features.filter(hasName));
-  }
-
-  heightGraph = new HeightGraph("heightDiv", buildings, state, (newFilter) => {
-    sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
-    heightGraph.updateFilter(newFilter);
-  }, async (feature) => {
-    heightGraph.deselect();
-    heightGraph.select(feature);
-    popupElement.features = [feature];
-    popupElement.open = true;
-  });
+  heightGraph = new HeightGraph(
+    "heightDiv",
+    buildings,
+    state,
+    (newFilter) => {
+      sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
+      heightGraph.updateFilter(newFilter);
+    },
+    async (feature) => {
+      heightGraph.deselect();
+      heightGraph.select(feature);
+      popupElement.features = [feature];
+      popupElement.open = true;
+    }
+  );
   timeline = new Timeline("timeDiv", state, (newPeriod) => {
     rendererGen.applyClassBreaksRenderer(newPeriod, state);
     heightGraph.updatePeriod(newPeriod);
@@ -239,4 +256,3 @@ categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
   rendererGen.applyCategory(state.showOnlyAnnotated);
   heightGraph.applyCategory(state.showOnlyAnnotated);
 });
-
