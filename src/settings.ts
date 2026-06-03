@@ -1,4 +1,4 @@
-/* Copyright 2017 Esri
+/* Copyright 2026 Esri
 
    Licensed under the Apache License, Version 2.0 (the "License");
 
@@ -44,6 +44,6 @@ export default {
     maxCnstrctYear: 2024
   },
   initPeriod: [true, true, true, true, true],
-  buildingsUrl: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/Manhattan_Data/SceneServer",
+  buildingsUrl: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/showcases_manhattan_buildings/SceneServer",
   maxAttributionLength: 50
 };

@@ -1,4 +1,4 @@
-/* Copyright 2017 Esri
+/* Copyright 2026 Esri
 
    Licensed under the Apache License, Version 2.0 (the "License");
 
@@ -22,12 +22,12 @@ import Point from "@arcgis/core/geometry/Point";
 import Graphic from "@arcgis/core/Graphic";
 import request from "@arcgis/core/request";
 
-export function getName(graphic: Graphic | null | undefined) {
+export function getName(graphic: Graphic | undefined) {
   const name = graphic?.attributes?.NAME;
   return typeof name === "string" ? name.trim() : "";
 }
 
-export function hasName(graphic: Graphic | null | undefined) {
+export function hasName(graphic: Graphic | undefined) {
   return getName(graphic).length > 0;
 }
 
@@ -43,10 +43,9 @@ export function generateDefinitionExpression(filter: number[]) {
   );
 }
 
-
 export async function getWikiContent(
   name: string,
-  position: Point | null | undefined
+  position: Point | undefined
 ): Promise<{ extract?: string; articleUrl?: string }> {
   const trimmedName = name?.trim();
   if (!trimmedName) {
@@ -85,15 +84,21 @@ export async function getWikiContent(
   const response = await request(url, {
     responseType: "json"
   });
-  const pages = response.data.query?.pages as Record<string, any> | undefined;
-  const search = response.data.query?.search as Array<{ title: string }> | undefined;
+  const data = response.data as {
+    query?: {
+      pages?: Record<string, { title: string; extract?: string }>;
+      search?: { title: string }[];
+    };
+  };
+  const pages = data.query?.pages;
+  const search = data.query?.search;
 
   if (!pages) {
     return {};
   }
 
-  const pageList: any[] = Object.values(pages);
-  let article: any = null;
+  const pageList = Object.values(pages);
+  let article: (typeof pageList)[number] | undefined;
 
   if (search?.length) {
     let i = 0;
@@ -109,7 +114,7 @@ export async function getWikiContent(
   }
 
   if (!article) {
-    article = pageList.find((page: any) => page?.extract) ?? null;
+    article = pageList.find((page) => page.extract);
   }
 
   if (!article?.extract) {

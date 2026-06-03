@@ -1,4 +1,4 @@
-/* Copyright 2017 Esri
+/* Copyright 2026 Esri
 
    Licensed under the Apache License, Version 2.0 (the "License");
 
@@ -37,16 +37,28 @@ import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 
-export function initialize(url: string, map: Map) {
-  request(url, {
+export async function initialize(url: string, map: Map) {
+  const response = await request(url, {
     responseType: "json"
-  }).then(function (response) {
-    const featureCollection: Graphic[] = [];
+  });
+  const data = response.data as {
+    features: {
+      geometry: {
+        coordinates: [number, number];
+      };
+      properties: {
+        FID: number;
+        Name: string;
+      };
+    }[];
+  };
+  const featureCollection: Graphic[] = [];
 
-    for (let i = 0; i < response.data.features.length; i++) {
-      const feat = response.data.features[i];
+  for (let i = 0; i < data.features.length; i++) {
+    const feat = data.features[i];
 
-      featureCollection.push(new Graphic({
+    featureCollection.push(
+      new Graphic({
         geometry: new Point({
           x: feat.geometry.coordinates[0],
           y: feat.geometry.coordinates[1],
@@ -56,80 +68,81 @@ export function initialize(url: string, map: Map) {
           OBJECTID: feat.properties.FID,
           Name: feat.properties.Name
         }
-      }));
-    }
+      })
+    );
+  }
 
-    const labelsLayer = new FeatureLayer({
-      fields: [
-        {
-          name: "OBJECTID",
-          alias: "objectId",
-          type: "oid"
+  const labelsLayer = new FeatureLayer({
+    fields: [
+      {
+        name: "OBJECTID",
+        alias: "objectId",
+        type: "oid"
+      },
+      {
+        name: "Name",
+        alias: "Name",
+        type: "string"
+      }
+    ],
+    objectIdField: "OBJECTID",
+    geometryType: "point",
+    spatialReference: new SpatialReference({ wkid: 4326 }),
+    source: featureCollection,
+    labelsVisible: true,
+    labelingInfo: [
+      new LabelClass({
+        labelExpressionInfo: {
+          expression: "$feature.Name"
         },
-        {
-          name: "Name",
-          alias: "Name",
-          type: "string"
-        }
-      ],
-      objectIdField: "OBJECTID",
-      geometryType: "point",
-      spatialReference: new SpatialReference({ wkid: 4326 }),
-      source: featureCollection,
-      labelsVisible: true,
-      labelingInfo: [
-        new LabelClass({
-          labelExpressionInfo: {
-            expression: "$feature.Name"
-          },
-          symbol: new LabelSymbol3D({
-            symbolLayers: [
-              new TextSymbol3DLayer({
-                material: {
-                  color: "white"
-                },
-                font: {
-                  family: "sans-serif",
-                  weight: "bold"
-                },
-                size: 12,
-                halo: {
-                  color: [50, 50, 50, 0.8],
-                  size: 1
-                }
-              })
-            ],
-            verticalOffset: {
-              screenLength: 100,
-              maxWorldLength: 100
-            },
-            callout: {
-              type: "line",
-              size: 2,
-              color: [150, 150, 150],
-              border: {
-                color: [255, 255, 255]
-              }
-            }
-          })
-        })
-      ],
-      renderer: new SimpleRenderer({
-        symbol: new PointSymbol3D({
+        symbol: new LabelSymbol3D({
           symbolLayers: [
-            new IconSymbol3DLayer({
-              resource: {
-                primitive: "circle"
-              },
-              size: 1,
+            new TextSymbol3DLayer({
               material: {
-                color: [255, 255, 255]
+                color: "white"
+              },
+              font: {
+                family: "sans-serif",
+                weight: "bold"
+              },
+              size: 12,
+              halo: {
+                color: [50, 50, 50, 0.8],
+                size: 1
               }
             })
-          ]
+          ],
+          verticalOffset: {
+            screenLength: 100,
+            maxWorldLength: 100
+          },
+          callout: {
+            type: "line",
+            size: 2,
+            color: [150, 150, 150],
+            border: {
+              color: [255, 255, 255]
+            }
+          }
         })
       })
-    });
-    map.add(labelsLayer);
+    ],
+    renderer: new SimpleRenderer({
+      symbol: new PointSymbol3D({
+        symbolLayers: [
+          new IconSymbol3DLayer({
+            resource: {
+              primitive: "circle"
+            },
+            size: 1,
+            material: {
+              color: [255, 255, 255]
+            }
+          })
+        ]
+      })
+    })
   });
+
+  map.add(labelsLayer);
 }

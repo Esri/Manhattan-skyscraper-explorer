@@ -1,4 +1,4 @@
-/* Copyright 2017 Esri
+/* Copyright 2026 Esri
 
    Licensed under the Apache License, Version 2.0 (the "License");
 
@@ -186,7 +186,7 @@ export default class HeightGraph {
       })
       .classed("circle", true)
       .attr("id", function (d) {
-        return "id-" + d.attributes.OBJECTID;
+        return "building" + d.attributes.OBJECTID;
       })
       .attr("fill", function (d) {
         const value = settings.ageClasses.filter(function (e) {
@@ -211,12 +211,12 @@ export default class HeightGraph {
     svg
       .append("text")
       .attr("x", this.paddingLeft + 2)
-      .attr("id", "upper-indicator");
+      .attr("id", "upperIndicator");
 
     svg
       .append("text")
       .attr("x", this.paddingLeft + 2)
-      .attr("id", "lower-indicator");
+      .attr("id", "lowerIndicator");
 
     // add event listeners when filters are changed
     brush.on("brush", function (e) {
@@ -225,11 +225,11 @@ export default class HeightGraph {
       groupHandlers.select("rect.bottom").attr("y", e.selection[1] - 1);
 
       svg
-        .select("#upper-indicator")
+        .select("#upperIndicator")
         .attr("y", e.selection[0] - 5)
         .text(Math.round(yScale.invert(e.selection[0])));
       svg
-        .select("#lower-indicator")
+        .select("#lowerIndicator")
         .attr("y", e.selection[1] + 15)
         .text(Math.round(yScale.invert(e.selection[1])));
       const newFilter = [yScale.invert(e.selection[1]), yScale.invert(e.selection[0])];
@@ -237,8 +237,8 @@ export default class HeightGraph {
       onFilterChange?.(newFilter);
     });
     brush.on("end", function (e) {
-      svg.select("#upper-indicator").text("");
-      svg.select("#lower-indicator").text("");
+      svg.select("#upperIndicator").text("");
+      svg.select("#lowerIndicator").text("");
       if (!e.selection) {
         yAxisGroup.call(brush).call(brush.move, [yScale(1500), yScale(0)]);
       }
@@ -251,13 +251,13 @@ export default class HeightGraph {
 
   // add a circle that will act like a highlight when a circle is clicked on
   select(feature: Graphic) {
-    const elem = d3.select("#id-" + feature.attributes.OBJECTID);
+    const elem = d3.select("#building" + feature.attributes.OBJECTID);
     if (elem.empty()) {
       return;
     }
     this.selectContainer
       .append("circle")
-      .attr("class", "selectedGraphic")
+      .attr("class", "selected-graphic")
       .attr("r", 8)
       .attr("cx", parseInt(elem.attr("cx"), 10))
       .attr("cy", parseInt(elem.attr("cy"), 10))
@@ -268,7 +268,7 @@ export default class HeightGraph {
 
   // remove circle that acts like a selection highlight
   deselect() {
-    this.selectContainer.selectAll(".selectedGraphic").remove();
+    this.selectContainer.selectAll(".selected-graphic").remove();
   }
 
   // color the buildings according to the new selected period

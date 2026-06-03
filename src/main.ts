@@ -1,4 +1,4 @@
-/* Copyright 2017 Esri
+/* Copyright 2026 Esri
 
    Licensed under the Apache License, Version 2.0 (the "License");
 
@@ -79,7 +79,7 @@ view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
 
 // --- LAYERS SETTINGS ---
 // set up labels to display Manhattan boroughs
-labels.initialize("./data/manhattan-boroughs.json", view.map!);
+await labels.initialize("./data/manhattan-boroughs.json", view.map!);
 
 // set an initial filter to display only buildings whose height is between minHeight and maxHeight
 const filter = [settings.buildingOptions.minHeight, settings.buildingOptions.maxHeight];
@@ -122,27 +122,27 @@ reactiveUtils.watch(() => popupElement.selectedFeature, async (graphic) => {
 reactiveUtils.watch(() => popupElement.open, (isOpen) => {
   if (!isOpen) {
     heightGraph.deselect();
-    state.selectedBuilding = null;    
+    state.selectedBuilding = null;
   }
 });
 
-// set up popup template for the scene layer
+// set up popup template for the SceneLayer
 const articleUrlByObjectId = new Map<string, string>();
 const buildingPopupTemplate = new PopupTemplate({
   title: "{NAME}",
   content: async (feature) => {
     const graphic = feature.graphic as Graphic;
-    const geometry = graphic.geometry as any;
+    const geometry = graphic.geometry;
     const position =
       geometry?.type === "point"
         ? (geometry as Point)
-        : ((geometry?.extent?.center as Point | null | undefined) ?? null);
+        : ((geometry?.extent?.center ?? undefined) as Point | undefined);
     const attributes = graphic.attributes ?? {};
     const name = getName(graphic);
     let content = `
-      <p class='info'>
+      <p class="info">
         <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(attributes.HEIGHTROOF)} feet
-        <img src='${new URL("construction.png", document.baseURI).toString()}' width="25" height="25"> ${attributes.CNSTRCT_YR}
+        <img src="${new URL("construction.png", document.baseURI).toString()}" width="25" height="25"> ${attributes.CNSTRCT_YR}
       </p>`;
 
     if (name) {
@@ -164,7 +164,7 @@ const buildingPopupTemplate = new PopupTemplate({
 
 popupElement.addEventListener("arcgisTriggerAction", (event) => {
   if (event.detail?.action?.id === "wiki-action") {
-    const selectedFeature = popupElement.selectedFeature as Graphic | null;
+    const selectedFeature = (popupElement.selectedFeature ?? undefined) as Graphic | undefined;
     const attributes = selectedFeature?.attributes ?? {};
     const name = getName(selectedFeature);
     if (!name) return;
@@ -182,7 +182,7 @@ const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-se
 searchElement.sources = new Collection([
   new LayerSearchSource({
     layer: sceneLayer,
-    outFields: ["NAME"],
+    outFields: ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"],
     searchFields: ["NAME"],
     displayField: "NAME",
     exactMatch: false,
@@ -201,7 +201,7 @@ try {
   // Only buildings higher that 200 ft are plotted
   query.where = `HEIGHTROOF >= 200 AND CNSTRCT_YR >= ${minCnstrctYear} AND CNSTRCT_YR <= ${maxCnstrctYear}`;
   query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
-  query.returnGeometry = false;
+  query.returnGeometry = true;
   const results = await sceneLayer.queryFeatures(query);
   buildings = results.features;
 
@@ -270,5 +270,5 @@ async function frameBuilding(objectId: number) {
     spatialReference: view.spatialReference
   });
 
-  await view.goTo( target, { duration: 1000 });
+  await view.goTo(target, { duration: 1000 });
 }
