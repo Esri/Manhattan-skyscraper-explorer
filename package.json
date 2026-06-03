@@ -19,8 +19,7 @@
     "@arcgis/map-components": "^5.0.16",
     "@esri/calcite-components": "^5.0.2",
     "d3": "^7.8.5",
-    "typescript": "^5.0.4",
-    "vite": "^4.3.9"
+    "typescript": "^5.0.4"
   },
   "devDependencies": {
     "@types/d3": "^7.4.0",
@@ -29,6 +28,7 @@
     "eslint": "^8.26.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.7.1"
+    "prettier": "^2.7.1",
+    "vite": "^8.0.16"
   }
 }
