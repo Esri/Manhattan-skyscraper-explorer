@@ -71,7 +71,7 @@ await viewElement.viewOnReady();
 viewElement.environment.lighting = {
    type: "sun",
    directShadowsEnabled: true,
-   date: new Date("May 21, 2021 03:30:00 GMT-05:00")
+   date: new Date("December 21, 2021 05:30:00 GMT-05:00")
 };
 const view = viewElement.view as SceneView;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
