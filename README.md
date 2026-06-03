@@ -10,8 +10,7 @@ This is a non-commercial, demo application made at the Esri R&D Center Zurich fo
 
 - Data driven visualization of buildings in Manhattan
 - Highlighting of selected buildings
-- Display information from different sources for selected building.
-- Different visualization options for point features: callout lines, relative to scene elevation mode, decluttering.
+- Display information from different sources for selected building
 
 ## Prerequisites
 
@@ -88,7 +87,6 @@ The following external libraries, APIs, open datasets and specifications were us
 - Scene Layer: [Service and Package Standard](https://github.com/Esri/i3s-spec)
 - <a href="https://d3js.org/" target="_blank">D3.js</a> for the timeline. D3.js is shared under a <a href="https://github.com/d3/d3/blob/master/LICENSE" target="blank">BSD 3 clause license</a>.
 - <a href="https://www.mediawiki.org/wiki/API:Main_page" target="_blank">Wikipedia API / MediaWiki</a> is used to retrieve a small description of the building. All retrieved pages are under the <a href="https://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License" target="_blank">Creative Commons Attribution-ShareAlike License</a>. See <a href="https://wikimediafoundation.org/wiki/Terms_of_Use" target="_blank">Wikipedia Terms of Use</a> for details.
-- <a href="https://github.com/nolimits4web/swiper" target="_blank">Swiper</a> for the image slider. Swiper is shared under an <a href="https://opensource.org/licenses/MIT" target="_blank">MIT license</a>.
 - <a href="http://www1.nyc.gov/site/doitt/initiatives/3d-building.page" target="_blank">3D building model</a> published on the Open Data portal of <a href="http://www1.nyc.gov/site/doitt/index.page" target="_blank">DoITT</a> under these <a href="http://www1.nyc.gov/home/terms-of-use.page" target="_blank">Terms of use</a>.
 - <a href="http://catalog.opendata.city/dataset/pediacities-nyc-neighborhoods/resource/91778048-3c58-449c-a3f9-365ed203e914" target="_blank"> Manhattan neighborhoods </a> provided by <a href="http://catalog.opendata.city/" target="_blank">Catalog Opendata City</a> under a <a href="http://opendefinition.org/licenses/odc-by/" target="_blank">Open Data Commons Attribution License</a>.
 
