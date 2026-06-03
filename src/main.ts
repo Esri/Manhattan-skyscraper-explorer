@@ -189,10 +189,6 @@ searchElement.sources = new Collection([
     placeholder: "Ex: Empire State Building"
   })
 ]);
-searchElement.addEventListener("arcgisSelectResult", async (event) => {
-  popupElement.features = [event.detail.result.feature];
-  popupElement.open = true;
-});
 
 // --- HEIGHT GRAPH SETTINGS ---
 try {
