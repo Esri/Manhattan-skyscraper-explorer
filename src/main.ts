@@ -24,11 +24,11 @@
  * Date: 07/06/17
  * Description: Main application file where the UI and scene view are loaded
  */
-
 import Graphic from "@arcgis/core/Graphic";
 import PopupTemplate from "@arcgis/core/PopupTemplate";
 import Collection from "@arcgis/core/core/Collection";
 import * as reactiveUtils from "@arcgis/core/core/reactiveUtils";
+import Extent from "@arcgis/core/geometry/Extent";
 import Point from "@arcgis/core/geometry/Point";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
@@ -56,8 +56,7 @@ import settings from "./settings";
 import {
   generateDefinitionExpression,
   getName,
-  getWikiContent,
-  hasName
+  getWikiContent
 } from "./utils";
 
 const state = new State();
@@ -195,33 +194,33 @@ searchElement.addEventListener("arcgisSelectResult", async (event) => {
   popupElement.open = true;
 });
 
-
 // --- HEIGHT GRAPH SETTINGS ---
 try {
-  const objectIdQuery = sceneLayer.createQuery();
-  objectIdQuery.where = "NAME IS NOT NULL";
-  const objectIds = await sceneLayer.queryObjectIds(objectIdQuery);
-  const batchSize = 100;
-  buildings = [];
+  const { minCnstrctYear, maxCnstrctYear } = settings.buildingOptions;
+  const query = sceneLayer.createQuery();
+  // Only buildings higher that 200 ft are plotted
+  query.where = `HEIGHTROOF >= 200 AND CNSTRCT_YR >= ${minCnstrctYear} AND CNSTRCT_YR <= ${maxCnstrctYear}`;
+  query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
+  query.returnGeometry = false;
+  const results = await sceneLayer.queryFeatures(query);
+  buildings = results.features;
 
-  for (let index = 0; index < objectIds.length; index += batchSize) {
-    const query = sceneLayer.createQuery();
-    query.objectIds = objectIds.slice(index, index + batchSize);
-    query.outFields = ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"];
-    query.returnGeometry = false;
-    const results = await sceneLayer.queryFeatures(query);
-    buildings.push(...results.features.filter(hasName));
-  }
-
-  heightGraph = new HeightGraph("heightDiv", buildings, state, (newFilter) => {
-    sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
-    heightGraph.updateFilter(newFilter);
-  }, async (feature) => {
-    heightGraph.deselect();
-    heightGraph.select(feature);
-    popupElement.features = [feature];
-    popupElement.open = true;
-  });
+  heightGraph = new HeightGraph(
+    "heightDiv",
+    buildings,
+    state,
+    (newFilter) => {
+      sceneLayer.definitionExpression = generateDefinitionExpression(newFilter);
+      heightGraph.updateFilter(newFilter);
+    },
+    async (feature) => {
+      heightGraph.deselect();
+      heightGraph.select(feature);
+      popupElement.features = [feature];
+      popupElement.open = true;
+      await frameBuilding(feature.attributes.OBJECTID);
+    }
+  );
   timeline = new Timeline("timeDiv", state, (newPeriod) => {
     rendererGen.applyClassBreaksRenderer(newPeriod, state);
     heightGraph.updatePeriod(newPeriod);
@@ -240,3 +239,36 @@ categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
   heightGraph.applyCategory(state.showOnlyAnnotated);
 });
 
+// A SceneLayer feature query only returns the flat 2D footprint so we need to build 3D extent
+const FEET_TO_METERS = 0.3048;
+async function frameBuilding(objectId: number) {
+  const footprintQuery = sceneLayer.createQuery();
+  footprintQuery.objectIds = [objectId];
+  footprintQuery.outFields = ["GROUNDELEV", "HEIGHTROOF"];
+  footprintQuery.returnGeometry = true;
+  footprintQuery.outSpatialReference = view.spatialReference;
+  const { features } = await sceneLayer.queryFeatures(footprintQuery);
+  const feature = features[0];
+  const footprint = feature?.geometry?.extent;
+  if (!footprint) {
+    return;
+  }
+
+  const ground = (feature.attributes.GROUNDELEV ?? 0) * FEET_TO_METERS;
+  const roof = (feature.attributes.HEIGHTROOF ?? 0) * FEET_TO_METERS;
+
+  const center = footprint.center;
+  const footprintRadius = Math.max(footprint.width, footprint.height) / 2;
+  const radius = Math.max(footprintRadius * 3, roof * 0.9);
+  const target = new Extent({
+    xmin: center.x - radius,
+    xmax: center.x + radius,
+    ymin: center.y - radius,
+    ymax: center.y + radius,
+    zmin: ground,
+    zmax: ground + roof,
+    spatialReference: view.spatialReference
+  });
+
+  await view.goTo( target, { duration: 1000 });
+}

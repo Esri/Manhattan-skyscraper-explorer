@@ -43,6 +43,7 @@ export function generateDefinitionExpression(filter: number[]) {
   );
 }
 
+
 export async function getWikiContent(
   name: string,
   position: Point | null | undefined

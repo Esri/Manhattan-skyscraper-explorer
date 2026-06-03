@@ -24,8 +24,8 @@
  * a GeoJSON file of points.
  **********************************/
 
-import Map from "@arcgis/core/Map";
 import Graphic from "@arcgis/core/Graphic";
+import Map from "@arcgis/core/Map";
 import Point from "@arcgis/core/geometry/Point";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
@@ -44,7 +44,7 @@ export function initialize(url: string, map: Map) {
     const featureCollection: Graphic[] = [];
 
     for (let i = 0; i < response.data.features.length; i++) {
-      var feat = response.data.features[i];
+      const feat = response.data.features[i];
 
       featureCollection.push(new Graphic({
         geometry: new Point({
@@ -88,7 +88,6 @@ export function initialize(url: string, map: Map) {
                 material: {
                   color: "white"
                 },
-                text: feat.properties.Name,
                 font: {
                   family: "sans-serif",
                   weight: "bold"
