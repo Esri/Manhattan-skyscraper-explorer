@@ -107,14 +107,15 @@ popupElement.dockOptions = {
   position: "top-right" as const
 };
 
-// sync popup component with selected building state and camera position
+// sync popup component with selected building state
 reactiveUtils.watch(() => popupElement.selectedFeature, async (graphic) => {
   if (graphic) {
     heightGraph.deselect();
     heightGraph.select(graphic);
     state.selectedBuilding = graphic;
-    if (graphic.geometry) {
-      await view.goTo(graphic.geometry, { duration: 1000 });
+    const objectId = graphic.attributes?.OBJECTID;
+    if (objectId != null) {
+      await frameBuilding(objectId);
     }
   }
 });
@@ -210,11 +211,8 @@ try {
       heightGraph.updateFilter(newFilter);
     },
     async (feature) => {
-      heightGraph.deselect();
-      heightGraph.select(feature);
       popupElement.features = [feature];
       popupElement.open = true;
-      await frameBuilding(feature.attributes.OBJECTID);
     }
   );
   timeline = new Timeline("timeDiv", state, (newPeriod) => {
