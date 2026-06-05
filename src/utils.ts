@@ -32,15 +32,7 @@ export function hasName(graphic: Graphic | undefined) {
 }
 
 export function generateDefinitionExpression(filter: number[]) {
-  return (
-    "HEIGHTROOF > " +
-    filter[0] +
-    " AND " +
-    "HEIGHTROOF < " +
-    filter[1] +
-    " AND " +
-    "CNSTRCT_YR >= 1900 AND CNSTRCT_YR <= 2024"
-  );
+  return `HEIGHTROOF > ${filter[0]} AND HEIGHTROOF < ${filter[1]} AND CNSTRCT_YR >= 1900 AND CNSTRCT_YR <= 2024`;
 }
 
 export async function getWikiContent(

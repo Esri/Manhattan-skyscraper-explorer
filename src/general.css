@@ -103,7 +103,7 @@ a {
   transform: translateY(6px);
 }
 
-button {
+.menu-panel button {
   font-family: "Avenir Next", "Helvetica Neue";
   position: relative;
   display: inline-block;

@@ -14,7 +14,7 @@ This is a non-commercial, demo application made at the Esri R&D Center Zurich fo
 
 ## Prerequisites
 
-- Node.js 16.0+
+- Node.js 20.19+
 
 ## Run project locally
 

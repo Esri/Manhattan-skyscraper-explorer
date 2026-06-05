@@ -76,15 +76,11 @@ export default class HeightGraph {
     const xScale = d3
       .scaleLinear()
       .domain([buildingOptions.minCnstrctYear - 1, buildingOptions.maxCnstrctYear])
-      // .range([this.paddingLeft, this.width - this.paddingRight]);
       .range([this.paddingLeft, this.width]);
     const yScale = d3
       .scaleLinear()
       .domain([0, buildingOptions.maxHeight])
       .range([this.height - this.paddingBottom, this.paddingTop]);
-    const graphRightX = this.width - this.paddingRight;
-    const filterHandleWidth = 34;
-    const filterHandleX = graphRightX - filterHandleWidth;
 
     // create axes
     const yAxis = d3
@@ -129,11 +125,8 @@ export default class HeightGraph {
     groupHandlers
       .append("rect")
       .classed("top", true)
-      // .attr("x", filterHandleX)
       .attr("x", xScale(2020))
-
       .attr("y", yScale(buildingOptions.maxHeight) - 9)
-      // .attr("width", filterHandleWidth)
       .attr("width", 50)
       .attr("height", 6)
       .attr("rx", 5)
@@ -143,10 +136,8 @@ export default class HeightGraph {
     groupHandlers
       .append("rect")
       .classed("bottom", true)
-      // .attr("x", filterHandleX)
       .attr("x", xScale(2020))
       .attr("y", yScale(buildingOptions.minHeight) - 1)
-      // .attr("width", filterHandleWidth)
       .attr("width", 50)
       .attr("height", 6)
       .attr("rx", 5)

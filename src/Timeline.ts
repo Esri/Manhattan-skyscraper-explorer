@@ -28,14 +28,6 @@ import settings from "./settings";
 
 export default class Timeline {
   constructor(container: string, state: State, onPeriodChange?: (newPeriod: boolean[]) => void) {
-    const updateButtons = (period: boolean[]) => {
-      for (let i = 0; i < period.length; i++) {
-        const buttonStyle = document.getElementById("period-" + i)!.style;
-        buttonStyle.backgroundColor = period[i] ? settings.ageClasses[i].color.toCss() : settings.defaultColor.toCss();
-        buttonStyle.color = period[i] ? "#fff" : "#777";
-      }
-    };
-
     for (let i = 0; i < settings.initPeriod.length; i++) {
       const buttonIndex = i;
       const button = document.createElement("button");
@@ -44,23 +36,27 @@ export default class Timeline {
       document.getElementById(container)!.appendChild(button);
       button.addEventListener("click", () => {
         const newPeriod = [];
-        for (let i = 0; i < settings.initPeriod.length; i++) {
-          newPeriod[i] = i !== buttonIndex ? state.selectedPeriod[i] : !state.selectedPeriod[i];
+        for (let j = 0; j < settings.initPeriod.length; j++) {
+          newPeriod[j] = j !== buttonIndex ? state.selectedPeriod[j] : !state.selectedPeriod[j];
         }
         state.selectedPeriod = newPeriod;
-        updateButtons(newPeriod);
+        this.updateButtons(newPeriod);
         onPeriodChange?.(newPeriod);
       });
     }
 
-    updateButtons(state.selectedPeriod);
+    this.updateButtons(state.selectedPeriod);
   }
 
   update(newPeriod: boolean[]) {
-    for (let i = 0; i < newPeriod.length; i++) {
+    this.updateButtons(newPeriod);
+  }
+
+  private updateButtons(period: boolean[]) {
+    for (let i = 0; i < period.length; i++) {
       const buttonStyle = document.getElementById("period-" + i)!.style;
-      buttonStyle.backgroundColor = newPeriod[i] ? settings.ageClasses[i].color.toCss() : settings.defaultColor.toCss();
-      buttonStyle.color = newPeriod[i] ? "#fff" : "#777";
+      buttonStyle.backgroundColor = period[i] ? settings.ageClasses[i].color.toCss() : settings.defaultColor.toCss();
+      buttonStyle.color = period[i] ? "#fff" : "#777";
     }
   }
 }

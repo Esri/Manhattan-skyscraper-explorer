@@ -25,7 +25,6 @@
  **********************************/
 
 import Graphic from "@arcgis/core/Graphic";
-import Map from "@arcgis/core/Map";
 import Point from "@arcgis/core/geometry/Point";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
@@ -37,7 +36,7 @@ import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 
-export async function initialize(url: string, map: Map) {
+export async function setupLabels(url: string): Promise<FeatureLayer> {
   const response = await request(url, {
     responseType: "json"
   });
@@ -120,9 +119,7 @@ export async function initialize(url: string, map: Map) {
             type: "line",
             size: 2,
             color: [150, 150, 150],
-            border: {
-              color: [255, 255, 255]
-            }
+            border: { color: [255, 255, 255] }
           }
         })
       })
@@ -144,5 +141,5 @@ export async function initialize(url: string, map: Map) {
     })
   });
 
-  map.add(labelsLayer);
+  return labelsLayer;
 }
