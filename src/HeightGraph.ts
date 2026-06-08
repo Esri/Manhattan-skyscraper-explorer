@@ -1,0 +1,311 @@
+/* Copyright 2026 Esri
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+
+   you may not use this file except in compliance with the License.
+
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+
+   distributed under the License is distributed on an "AS IS" BASIS,
+
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+   See the License for the specific language governing permissions and
+
+   limitations under the License.*/
+
+import * as d3 from "d3";
+
+import Color from "@arcgis/core/Color";
+import Graphic from "@arcgis/core/Graphic";
+
+import settings from "./settings";
+import { State } from "./State";
+import { hasName } from "./utils";
+
+/**
+ * This class builds the graph that displays
+ * the correlation between building height and
+ * construction year.
+ */
+
+export default class HeightGraph {
+  width: number;
+  height: number;
+  paddingLeft: number;
+  paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+
+  circles: d3.Selection<SVGCircleElement, Graphic, SVGSVGElement, unknown>;
+  selectContainer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+
+  constructor(
+    container: string,
+    features: Graphic[],
+    state: State,
+    onFilterChange?: (newFilter: number[]) => void,
+    onBuildingClick?: (feature: Graphic) => void
+  ) {
+    // general settings for the svg area
+    this.paddingLeft = 34;
+    this.paddingRight = 52;
+    this.paddingTop = 20;
+    this.paddingBottom = 15;
+    const containerElement = document.getElementById(container)!;
+    const minWidth = 320;
+    const minHeight = this.paddingTop + this.paddingBottom + 60;
+    this.width = Math.max(containerElement.clientWidth, minWidth);
+    this.height = Math.max(containerElement.clientHeight, minHeight);
+
+    // define svg
+    const svg = d3
+      .select("#" + container)
+      .append("svg")
+      .attr("height", this.height)
+      .attr("width", this.width + 2)
+      .attr("viewBox", `0 0 ${this.width + 2} ${this.height}`)
+      .attr("preserveAspectRatio", "none");
+
+    // create scales
+    const buildingOptions = settings.buildingOptions;
+    const xScale = d3
+      .scaleLinear()
+      .domain([buildingOptions.minCnstrctYear - 1, buildingOptions.maxCnstrctYear])
+      .range([this.paddingLeft, this.width]);
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, buildingOptions.maxHeight])
+      .range([this.height - this.paddingBottom, this.paddingTop]);
+
+    // create axes
+    const yAxis = d3
+      .axisLeft(yScale)
+      .tickValues([0, 500, 1000, 1500])
+      .tickFormat((d) => (d === 1500 ? d + " ft" : d.toString()))
+      .tickPadding(10);
+
+    // add helper lines that will show the values on the vertical axis
+    function appendHorizontalLine(x1: number, y1: number, x2: number, y2: number) {
+      svg
+        .append("line")
+        .attr("x1", x1)
+        .attr("y1", yScale(y1))
+        .attr("x2", xScale(x2))
+        .attr("y2", yScale(y2))
+        .style("stroke-dasharray", "2, 2")
+        .style("stroke", "#bbb");
+    }
+    appendHorizontalLine(this.paddingLeft, 1000, 2025, 1000);
+    appendHorizontalLine(this.paddingLeft, 500, 2025, 500);
+    appendHorizontalLine(this.paddingLeft, 0, 2025, 0);
+    appendHorizontalLine(this.paddingLeft, 1408, 2009, 1408);
+
+    // Keep the reference tower scaled by the same y-axis used for building heights.
+    const towerTopFeet = 1500;
+    const towerBottomFeet = 0;
+    const towerWidth = 30;
+    const towerX = this.paddingLeft - 100;
+
+    // add image of the building to better understand the vertical height axis
+    svg
+      .append("image")
+      .attr("xlink:href", "./world-trade-center.png")
+      .attr("x", towerX)
+      .attr("y", yScale(towerTopFeet))
+      .attr("height", yScale(towerBottomFeet) - yScale(towerTopFeet))
+      .attr("width", towerWidth);
+
+    // handlers for filtering
+    const groupHandlers = svg.append("g");
+    groupHandlers
+      .append("rect")
+      .classed("top", true)
+      .attr("x", xScale(2020))
+      .attr("y", yScale(buildingOptions.maxHeight) - 9)
+      .attr("width", 50)
+      .attr("height", 6)
+      .attr("rx", 5)
+      .attr("ry", 0)
+      .attr("cursor", "ns-resize")
+      .style("fill", "#bbb");
+    groupHandlers
+      .append("rect")
+      .classed("bottom", true)
+      .attr("x", xScale(2020))
+      .attr("y", yScale(buildingOptions.minHeight) - 1)
+      .attr("width", 50)
+      .attr("height", 6)
+      .attr("rx", 5)
+      .attr("ry", 0)
+      .attr("cursor", "ns-resize")
+      .style("fill", "#bbb");
+
+    // define vertical axis and append it to the svg container
+    const yAxisGroup = svg
+      .append("g")
+      .attr("transform", "translate(" + this.paddingLeft + ", 0)")
+      .call(yAxis);
+
+    // brush added for filtering
+    const brush = d3.brushY().extent([
+      [0, this.paddingTop],
+      [this.width, this.height - this.paddingBottom]
+    ]);
+    yAxisGroup.call(brush).call(brush.move, [yScale(buildingOptions.maxHeight), yScale(buildingOptions.minHeight)]);
+    svg.select(".overlay").attr("display", "none");
+
+    // add building features as circles to the graph
+    const circles = svg
+      .selectAll("circle")
+      .data(features)
+      .enter()
+      .append("circle")
+      .attr("r", 4)
+      .attr("class", function (d) {
+        let value;
+        settings.ageClasses.forEach(function (e, i) {
+          if (e.minValue <= d.attributes.CNSTRCT_YR && d.attributes.CNSTRCT_YR <= e.maxValue) {
+            value = i;
+          }
+        });
+        return "construct-" + value;
+      })
+      .classed("circle", true)
+      .attr("id", function (d) {
+        return "building" + d.attributes.OBJECTID;
+      })
+      .attr("fill", function (d) {
+        const value = settings.ageClasses.filter(function (e) {
+          return e.minValue <= d.attributes.CNSTRCT_YR && d.attributes.CNSTRCT_YR <= e.maxValue;
+        });
+        const color = value[0].color.clone();
+        color.a = 0.7;
+        return color.toCss();
+      })
+      .attr("cx", function (d) {
+        return xScale(d.attributes.CNSTRCT_YR);
+      })
+      .attr("cy", function (d) {
+        return yScale(d.attributes.HEIGHTROOF);
+      })
+      .on("click", function (_e, d) {
+        state.selectedBuilding = d;
+        onBuildingClick?.(d);
+      });
+
+    // add text that shows the height of the buildings that are filtered
+    svg
+      .append("text")
+      .attr("x", this.paddingLeft + 2)
+      .attr("id", "upperIndicator");
+
+    svg
+      .append("text")
+      .attr("x", this.paddingLeft + 2)
+      .attr("id", "lowerIndicator");
+
+    // add event listeners when filters are changed
+    brush.on("brush", function (e) {
+      groupHandlers.select("rect.top").attr("y", e.selection[0] - 9);
+      groupHandlers.select("rect.bottom").attr("y", e.selection[1] - 1);
+
+      svg
+        .select("#upperIndicator")
+        .attr("y", e.selection[0] - 5)
+        .text(Math.round(yScale.invert(e.selection[0])));
+      svg
+        .select("#lowerIndicator")
+        .attr("y", e.selection[1] + 15)
+        .text(Math.round(yScale.invert(e.selection[1])));
+      const newFilter = [yScale.invert(e.selection[1]), yScale.invert(e.selection[0])];
+      state.filteredBuildings = newFilter;
+      onFilterChange?.(newFilter);
+    });
+    brush.on("end", function (e) {
+      svg.select("#upperIndicator").text("");
+      svg.select("#lowerIndicator").text("");
+      if (!e.selection) {
+        yAxisGroup.call(brush).call(brush.move, [yScale(1500), yScale(0)]);
+      }
+    });
+
+    // add the circles and the selection
+    this.circles = circles;
+    this.selectContainer = svg.append("g");
+  }
+
+  // add a circle that will act like a highlight when a circle is clicked on
+  select(feature: Graphic) {
+    const elem = d3.select("#building" + feature.attributes.OBJECTID);
+    if (elem.empty()) {
+      return;
+    }
+    this.selectContainer
+      .append("circle")
+      .attr("class", "selected-graphic")
+      .attr("r", 8)
+      .attr("cx", parseInt(elem.attr("cx"), 10))
+      .attr("cy", parseInt(elem.attr("cy"), 10))
+      .attr("stroke-width", 4)
+      .attr("stroke", settings.highlightOptions.color.toCss())
+      .attr("fill", "none");
+  }
+
+  // remove circle that acts like a selection highlight
+  deselect() {
+    this.selectContainer.selectAll(".selected-graphic").remove();
+  }
+
+  // color the buildings according to the new selected period
+  updatePeriod(newPeriod: boolean[]) {
+    for (let i = 0; i < newPeriod.length; i++) {
+      let color: Color;
+      if (newPeriod[i]) {
+        color = settings.ageClasses[i].color.clone();
+        color.a = 0.8;
+      } else {
+        color = settings.defaultColor;
+      }
+      this.circles.filter(".construct-" + i).attr("fill", color.toCss(true));
+    }
+  }
+
+  // set display:none to circles when the corresponding buildings are filtered out
+  updateFilter(newFilter: number[]) {
+    this.circles.attr("display", function (d) {
+      if (d.attributes.HEIGHTROOF < newFilter[0] || d.attributes.HEIGHTROOF > newFilter[1]) {
+        return "none";
+      } else {
+        return "inline";
+      }
+    });
+  }
+
+  // change the size and opacity of points when only annotated buildings are selected
+  applyCategory(showOnlyAnnotated: boolean) {
+    if (!showOnlyAnnotated) {
+      this.circles.attr("opacity", 1).attr("r", 4);
+    } else if (showOnlyAnnotated) {
+      this.circles
+        .attr("opacity", function (d) {
+          if (hasName(d)) {
+            return 1;
+          } else {
+            return 0.2;
+          }
+        })
+        .attr("r", function (d) {
+          if (hasName(d)) {
+            return 4;
+          } else {
+            return 1;
+          }
+        });
+    }
+  }
+}

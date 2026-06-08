@@ -1,0 +1,201 @@
+/*  Copyright 2026 Esri
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+
+   you may not use this file except in compliance with the License.
+
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+
+   distributed under the License is distributed on an "AS IS" BASIS,
+
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+   See the License for the specific language governing permissions and
+
+   limitations under the License.*/
+
+@import "@arcgis/core/assets/esri/themes/light/main.css";
+@import "@esri/calcite-components/main.css";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+:root {
+  --app-text: #323232;
+  --calcite-color-background: #fff;
+  --calcite-color-brand: #6e6e6e;
+  --calcite-color-brand-press: #949494;
+  --calcite-color-brand-hover: #474747;
+}
+
+h1 {
+  font-size: 1.8em;
+  margin: 0;
+  font-weight: normal;
+  color: rgb(0, 0, 0);
+}
+
+a {
+  color: rgb(0, 0, 0);
+}
+
+.menu-panel {
+  --chart-height: clamp(118px, 22vh, 168px);
+  --timeline-button-height: 36px;
+  height: calc(var(--chart-height) + var(--timeline-button-height) + 28px);
+  overflow-y: hidden;
+}
+
+#timeWrap {
+  --graph-axis-left-offset: 40px;
+  width: min(calc(100% - 5rem), 1320px);
+  min-width: 720px;
+  min-height: calc(var(--chart-height) + var(--timeline-button-height) + 20px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 8px 16px;
+  display: grid;
+  grid-template-columns: 5.75rem minmax(0, 1fr);
+  grid-template-rows: var(--chart-height) auto;
+  row-gap: 4px;
+}
+
+#heightDiv {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
+  height: var(--chart-height);
+  width: 100%;
+  margin: 0;
+  transform-origin: left;
+}
+
+#timeDiv {
+  grid-column: 2;
+  grid-row: 2;
+  margin-left: var(--graph-axis-left-offset);
+  width: calc(100% - var(--graph-axis-left-offset));
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  transform-origin: left;
+}
+
+#heightDiv > svg {
+  display: block;
+  width: 100%;
+  height: var(--chart-height);
+  overflow: visible;
+}
+
+#categoryLabel {
+  grid-column: 1;
+  grid-row: 2;
+  transform: translateY(6px);
+}
+
+.menu-panel button {
+  font-family: "Avenir Next", "Helvetica Neue";
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  -webkit-transition: all 0.05s linear;
+  transition: all 0.05s linear;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  height: var(--timeline-button-height);
+  line-height: 26px;
+  padding: 5px 7px;
+  text-align: center;
+  outline: none;
+  border: none;
+  border-radius: 5px;
+}
+
+@media (max-height: 700px) {
+  .menu-panel {
+    --timeline-button-height: 36px;
+    height: calc(var(--chart-height) + var(--timeline-button-height) + 22px);
+  }
+
+  #timeWrap {
+    min-height: calc(var(--chart-height) + var(--timeline-button-height) + 16px);
+    padding-block: 6px;
+  }
+}
+
+arcgis-expand .app-info-panel {
+  max-width: 33rem;
+  padding: 1rem;
+  margin: 0 auto;
+}
+
+arcgis-expand .app-info-panel p {
+  margin: 0;
+}
+
+.circle:hover {
+  cursor: pointer;
+}
+
+rect.selection {
+  fill: rgba(150, 150, 150, 0.5);
+  stroke: rgba(150, 150, 150, 0);
+}
+
+rect.handle--n,
+rect.handle--s {
+  fill: #bbb;
+  stroke: #bbb;
+  height: 2px !important;
+}
+
+.esri-attribution__sources {
+  font-size: 0.7em;
+}
+
+a {
+  cursor: pointer;
+}
+
+#upperIndicator,
+#lowerIndicator {
+  font-size: 0.7em;
+}
+
+.tick text {
+  font-size: 1.3em;
+}
+
+#loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+#loadingInfo {
+  margin-top: 20%;
+}
+
+#loadingImage {
+  height: 40px;
+}
+
+path.domain,
+.tick line {
+  stroke: #fff;
+}

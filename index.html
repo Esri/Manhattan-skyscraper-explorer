@@ -1,0 +1,159 @@
+<!--  Copyright 2026 Esri
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+
+   you may not use this file except in compliance with the License.
+
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+
+   distributed under the License is distributed on an "AS IS" BASIS,
+
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+   See the License for the specific language governing permissions and
+
+   limitations under the License.​-->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Manhattan Skyscraper Explorer</title>
+
+    <link
+      rel="icon"
+      media="(prefers-color-scheme:dark)"
+      type="image/png"
+      sizes="32x32"
+      href="https://www.esri.com/content/dam/esrisites/en-us/common/favicon/esri-favicon-dark-32.png"
+    />
+    <link
+      rel="icon"
+      media="(prefers-color-scheme:light)"
+      type="image/png"
+      sizes="32x32"
+      href="https://www.esri.com/content/dam/esrisites/en-us/common/favicon/esri-favicon-light-32.png"
+    />
+
+    <link rel="stylesheet" href="/src/general.css" />
+  </head>
+  <body>
+    <calcite-shell>
+      <calcite-shell-panel slot="panel-bottom" class="menu-panel">
+        <div id="timeWrap">
+          <div id="heightDiv"></div>
+          <calcite-label id="categoryLabel" layout="inline" hidden>
+            <calcite-checkbox id="categoryCheckbox"></calcite-checkbox>
+            Only annotated
+          </calcite-label>
+          <div id="timeDiv"></div>
+        </div>
+      </calcite-shell-panel>
+
+      <arcgis-scene
+        id="viewElement"
+        basemap="gray-vector"
+        ground="world-elevation"
+        camera-position="-74.028, 40.691, 544"
+        camera-heading="38"
+        camera-tilt="79"
+        camera-fov="55"
+        popup-component-enabled
+      >
+        <arcgis-popup slot="popup"></arcgis-popup>
+
+        <h1 slot="bottom-right"><strong>Manhattan</strong> Skyscraper Explorer</h1>
+        <arcgis-search
+          slot="top-left"
+          include-default-sources-disabled="true"
+          result-graphic-disabled="true"
+        ></arcgis-search>
+        <arcgis-zoom slot="top-left"></arcgis-zoom>
+        <arcgis-navigation-toggle slot="top-left"></arcgis-navigation-toggle>
+        <arcgis-compass slot="top-left"></arcgis-compass>
+        <arcgis-expand slot="top-left">
+          <arcgis-daylight
+            date-or-season="season"
+            hide-shadows-toggle
+            hide-sun-lighting-toggle
+            hide-timezone
+          ></arcgis-daylight>
+        </arcgis-expand>
+
+        <arcgis-expand slot="bottom-left" expand-icon="information-f">
+          <calcite-panel class="app-info-panel">
+            <h2>Disclaimer</h2>
+            <p>
+              This is a non-commercial, demo application made at the Esri R&D Center Zurich for building exploration in
+              Manhattan. It is built on top of
+              <a href="https://developers.arcgis.com/javascript/" target="_blank"
+                >ArcGIS Maps SDK for JavaScript version 5.0</a
+              >
+              and allows users to explore some of the highest buildings in Manhattan in 3D.
+            </p>
+            <h2>Credits</h2>
+            <p>The following external libraries, APIs and open datasets were used in the making of this application:</p>
+            <ul>
+              <li>
+                <a href="https://d3js.org/" target="_blank">D3js</a> for the timeline. D3js is shared under a
+                <a href="https://github.com/d3/d3/blob/master/LICENSE" target="blank">BSD 3 clause license</a>.
+              </li>
+              <li>
+                <a href="https://www.mediawiki.org/wiki/API:Main_page" target="_blank">Wikipedia API / MediaWiki</a> is
+                used to retrieve a small description of the building. All retrieved pages are under the
+                <a
+                  href="https://en.wikipedia.org/wiki/Wikipedia:Text_of_Creative_Commons_Attribution-ShareAlike_3.0_Unported_License"
+                  target="_blank"
+                  >Creative Commons Attribution-ShareAlike License</a
+                >. See
+                <a href="https://wikimediafoundation.org/wiki/Terms_of_Use" target="_blank">Wikipedia Terms of Use</a>
+                for details.
+              </li>
+              <li>
+                <a href="http://www1.nyc.gov/site/doitt/initiatives/3d-building.page" target="_blank"
+                  >3D building model</a
+                >
+                published on the Open Data portal of
+                <a href="http://www1.nyc.gov/site/doitt/index.page" target="_blank">DoITT</a> under these
+                <a href="http://www1.nyc.gov/home/terms-of-use.page" target="_blank">Terms of use</a>.
+              </li>
+              <li>
+                <a
+                  href="https://data.cityofnewyork.us/Housing-Development/Building-Footprints/nqwf-w8eh"
+                  target="_blank"
+                >
+                  New York Building footprints with housing information
+                </a>
+                provided by <a href="http://www1.nyc.gov/site/doitt/index.page" target="_blank">DoITT</a> and published
+                on <a href="https://data.cityofnewyork.us/" target="_blank">NYC Open Data Portal</a>.
+              </li>
+              <li>
+                <a
+                  href="http://catalog.opendata.city/dataset/pediacities-nyc-neighborhoods/resource/91778048-3c58-449c-a3f9-365ed203e914"
+                  target="_blank"
+                >
+                  Manhattan neighborhoods
+                </a>
+                provided by <a href="http://catalog.opendata.city/" target="_blank">Catalog Opendata City</a> under a
+                <a href="http://opendefinition.org/licenses/odc-by/" target="_blank"
+                  >Open Data Commons Attribution License</a
+                >.
+              </li>
+            </ul>
+          </calcite-panel>
+        </arcgis-expand>
+      </arcgis-scene>
+    </calcite-shell>
+    <div id="loading">
+      <p id="loadingInfo"></p>
+      <p>Loading...</p>
+      <img id="loadingImage" src="./loading.gif" alt="Loading..." />
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
