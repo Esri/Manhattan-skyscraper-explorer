@@ -52,21 +52,16 @@ import { State } from "./State";
 import Timeline from "./Timeline";
 import { setupLabels } from "./labels";
 import settings from "./settings";
-import {
-  generateDefinitionExpression,
-  getName,
-  getWikiContent
-} from "./utils";
+import { generateDefinitionExpression, getName, getWikiContent } from "./utils";
 const state = new State();
-
 
 // --- STARTUP ---
 const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
 await viewElement.viewOnReady();
 viewElement.environment.lighting = {
-   type: "sun",
-   directShadowsEnabled: true,
-   date: new Date("December 21, 2021 05:30:00 GMT-05:00")
+  type: "sun",
+  directShadowsEnabled: true,
+  date: new Date("December 21, 2021 05:30:00 GMT-05:00")
 };
 const view = viewElement.view;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
@@ -82,10 +77,8 @@ const [heightGraph, sceneLayerView] = await Promise.all([
   setupLabels(view, "./data/manhattan-boroughs.json")
 ]);
 
-
 await reactiveUtils.whenOnce(() => !sceneLayerView.updating);
 document.getElementById("loading")!.style.display = "none";
-
 
 // --- SETUP FUNCTIONS ---
 function setupSceneLayer(): { sceneLayer: SceneLayer; rendererGen: RendererGenerator } {
@@ -102,16 +95,18 @@ function setupSceneLayer(): { sceneLayer: SceneLayer; rendererGen: RendererGener
 }
 
 function setupPopup(): ArcgisPopup {
-    const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
-    popupElement.dockEnabled = true;
-    popupElement.dockOptions = {
-      buttonEnabled: false,
-      breakpoint: false,
-      position: "top-right" as const
-    };
-    
-    // sync popup component with selected building state
-    reactiveUtils.watch(() => popupElement.selectedFeature, async (graphic) => {
+  const popupElement = document.querySelector<ArcgisPopup>("arcgis-popup")!;
+  popupElement.dockEnabled = true;
+  popupElement.dockOptions = {
+    buttonEnabled: false,
+    breakpoint: false,
+    position: "top-right" as const
+  };
+
+  // sync popup component with selected building state
+  reactiveUtils.watch(
+    () => popupElement.selectedFeature,
+    async (graphic) => {
       if (graphic) {
         heightGraph.deselect();
         heightGraph.select(graphic);
@@ -121,83 +116,90 @@ function setupPopup(): ArcgisPopup {
           await frameBuilding(objectId);
         }
       }
-    });
-    
-    reactiveUtils.watch(() => popupElement.open, (isOpen) => {
+    }
+  );
+
+  reactiveUtils.watch(
+    () => popupElement.open,
+    (isOpen) => {
       if (!isOpen) {
         heightGraph.deselect();
         state.selectedBuilding = null;
       }
-    });
-    
-    // set up popup template for the SceneLayer
-    const articleUrlByObjectId = new Map<string, string>();
-    const wikiAction = new ActionButton({
-      title: "Wikipedia",
-      id: "wiki-action",
-      icon: "article",
-      visible: false
-    });
-    const buildingPopupTemplate = new PopupTemplate({
-      title: "{NAME}",
-      content: async (feature) => {
-        const graphic = feature.graphic as Graphic;
-        const geometry = graphic.geometry;
-        const position =
-          geometry?.type === "point"
-            ? (geometry as Point)
-            : ((geometry?.extent?.center ?? undefined) as Point | undefined);
-        const attributes = graphic.attributes ?? {};
-        const name = getName(graphic);
-        let content = `
+    }
+  );
+
+  // set up popup template for the SceneLayer
+  const articleUrlByObjectId = new Map<string, string>();
+  const wikiAction = new ActionButton({
+    title: "Wikipedia",
+    id: "wiki-action",
+    icon: "article",
+    visible: false
+  });
+  const buildingPopupTemplate = new PopupTemplate({
+    title: "{NAME}",
+    content: async (feature) => {
+      const graphic = feature.graphic as Graphic;
+      const geometry = graphic.geometry;
+      const position =
+        geometry?.type === "point"
+          ? (geometry as Point)
+          : ((geometry?.extent?.center ?? undefined) as Point | undefined);
+      const attributes = graphic.attributes ?? {};
+      const name = getName(graphic);
+      let content = `
           <p class="info" style="margin: 1rem 0;">
-            <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(attributes.HEIGHTROOF)} feet
-            <img src="${new URL("construction.png", document.baseURI).toString()}" width="25" height="25"> ${attributes.CNSTRCT_YR}
+            <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(
+        attributes.HEIGHTROOF
+      )} feet
+            <img src="${new URL("construction.png", document.baseURI).toString()}" width="25" height="25"> ${
+        attributes.CNSTRCT_YR
+      }
           </p>`;
 
-        wikiAction.visible = !!name;
-        if (name) {
-          const wikiResult = await getWikiContent(name, position);
-          content += wikiResult.extract ?? "";
-          if (wikiResult.articleUrl) {
-            articleUrlByObjectId.set(String(attributes.OBJECTID), wikiResult.articleUrl);
-          }
+      wikiAction.visible = !!name;
+      if (name) {
+        const wikiResult = await getWikiContent(name, position);
+        content += wikiResult.extract ?? "";
+        if (wikiResult.articleUrl) {
+          articleUrlByObjectId.set(String(attributes.OBJECTID), wikiResult.articleUrl);
         }
-
-        return content;
-      },
-      actions: [wikiAction]
-    });
-    
-    popupElement.addEventListener("arcgisTriggerAction", (event) => {
-      if (event.detail?.action?.id === "wiki-action") {
-        const selectedFeature = (popupElement.selectedFeature ?? undefined) as Graphic | undefined;
-        const attributes = selectedFeature?.attributes ?? {};
-        const name = getName(selectedFeature);
-        if (!name) return;
-        const articleUrl =
-          articleUrlByObjectId.get(String(attributes.OBJECTID)) ??
-          `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
-        window.open(articleUrl, "_blank");
       }
-    });   
-    sceneLayer.popupTemplate = buildingPopupTemplate;
-    return popupElement;
+
+      return content;
+    },
+    actions: [wikiAction]
+  });
+
+  popupElement.addEventListener("arcgisTriggerAction", (event) => {
+    if (event.detail?.action?.id === "wiki-action") {
+      const selectedFeature = (popupElement.selectedFeature ?? undefined) as Graphic | undefined;
+      const attributes = selectedFeature?.attributes ?? {};
+      const name = getName(selectedFeature);
+      if (!name) return;
+      const articleUrl =
+        articleUrlByObjectId.get(String(attributes.OBJECTID)) ??
+        `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
+      window.open(articleUrl, "_blank");
+    }
+  });
+  sceneLayer.popupTemplate = buildingPopupTemplate;
+  return popupElement;
 }
 
 function setupSearch() {
-const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
-searchElement.sources = new Collection([
-  new LayerSearchSource({
-    layer: sceneLayer,
-    outFields: ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"],
-    searchFields: ["NAME"],
-    displayField: "NAME",
-    exactMatch: false,
-    placeholder: "Ex: Empire State Building"
-  })
-]);
-
+  const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
+  searchElement.sources = new Collection([
+    new LayerSearchSource({
+      layer: sceneLayer,
+      outFields: ["OBJECTID", "NAME", "HEIGHTROOF", "CNSTRCT_YR"],
+      searchFields: ["NAME"],
+      displayField: "NAME",
+      exactMatch: false,
+      placeholder: "Ex: Empire State Building"
+    })
+  ]);
 }
 
 async function setupHeightGraph(): Promise<HeightGraph> {
@@ -231,7 +233,7 @@ async function setupHeightGraph(): Promise<HeightGraph> {
   heightGraph.applyCategory(state.showOnlyAnnotated);
 
   setupCategoryFilter();
-return heightGraph;
+  return heightGraph;
 }
 
 function setupCategoryFilter() {
@@ -244,7 +246,7 @@ function setupCategoryFilter() {
   document.querySelector<HTMLElement>("#categoryLabel")!.hidden = false;
 }
 
-// A SceneLayer feature query only returns the flat 2D footprint so we need to build the 3D extent  
+// A SceneLayer feature query only returns the flat 2D footprint so we need to build the 3D extent
 const FEET_TO_METERS = 0.3048;
 async function frameBuilding(objectId: number) {
   const footprintQuery = sceneLayer.createQuery();
@@ -264,8 +266,7 @@ async function frameBuilding(objectId: number) {
   target.zmin = ground;
   target.zmax = ground + roof;
 
-  await view.goTo(target, { duration: 1000 })
-  .catch(function(error) {
+  await view.goTo(target, { duration: 1000 }).catch(function (error) {
     if (error.name != "AbortError") {
       console.error(error);
     }

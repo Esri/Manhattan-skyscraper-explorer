@@ -44,6 +44,7 @@ export default {
     maxCnstrctYear: 2024
   },
   initPeriod: [true, true, true, true, true],
-  buildingsUrl: "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/showcases_manhattan_buildings/SceneServer",
+  buildingsUrl:
+    "https://services2.arcgis.com/cFEFS0EWrhfDeVw9/arcgis/rest/services/showcases_manhattan_buildings/SceneServer",
   maxAttributionLength: 50
 };

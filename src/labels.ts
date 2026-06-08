@@ -38,7 +38,6 @@ import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
 import SceneView from "@arcgis/core/views/SceneView";
 
 export async function setupLabels(view: SceneView, url: string): Promise<void> {
-
   const response = await request(url, {
     responseType: "json"
   });
