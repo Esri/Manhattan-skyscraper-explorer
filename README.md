@@ -2,7 +2,7 @@
 
 This is a non-commercial, demo application made at the Esri R&D Center Zurich for building exploration in Manhattan. It is built on top of [ArcGIS API for JavaScript](https://developers.arcgis.com/javascript/) and allows users to explore some of the highest buildings in Manhattan in 3D.
 
-![screenshot](./img/screenshot.png)
+![screenshot](public/screenshot.png)
 
 [View it live](https://esri.github.io/Manhattan-skyscraper-explorer/)
 
