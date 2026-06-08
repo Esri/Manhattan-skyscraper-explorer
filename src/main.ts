@@ -32,7 +32,6 @@ import Extent from "@arcgis/core/geometry/Extent";
 import Point from "@arcgis/core/geometry/Point";
 import SceneLayer from "@arcgis/core/layers/SceneLayer";
 import ActionButton from "@arcgis/core/support/actions/ActionButton";
-import SceneView from "@arcgis/core/views/SceneView";
 import LayerSearchSource from "@arcgis/core/widgets/Search/LayerSearchSource";
 import "@arcgis/map-components/components/arcgis-compass";
 import "@arcgis/map-components/components/arcgis-daylight";
@@ -69,19 +68,20 @@ viewElement.environment.lighting = {
    directShadowsEnabled: true,
    date: new Date("December 21, 2021 05:30:00 GMT-05:00")
 };
-const view = viewElement.view as SceneView;
+const view = viewElement.view;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
 
 const { sceneLayer, rendererGen } = setupSceneLayer();
 const popupElement = setupPopup();
 setupSearch();
 
+// Run startup tasks in parallel to reduce load time
 const [heightGraph, sceneLayerView] = await Promise.all([
   setupHeightGraph(),
   view.whenLayerView(sceneLayer),
   setupLabels(view, "./data/manhattan-boroughs.json")
 ]);
-setupCategoryFilter();
+
 
 await reactiveUtils.whenOnce(() => !sceneLayerView.updating);
 document.getElementById("loading")!.style.display = "none";
@@ -229,6 +229,8 @@ async function setupHeightGraph(): Promise<HeightGraph> {
   });
   timeline.update(state.selectedPeriod);
   heightGraph.applyCategory(state.showOnlyAnnotated);
+
+  setupCategoryFilter();
 return heightGraph;
 }
 
