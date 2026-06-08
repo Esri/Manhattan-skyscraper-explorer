@@ -58,19 +58,10 @@ import {
   getName,
   getWikiContent
 } from "./utils";
-
 const state = new State();
 
 
-// --- LAYER SETTINGS ---
-const labelsLayerPromise = setupLabels("./data/manhattan-boroughs.json");
-const { sceneLayer, rendererGen } = setupSceneLayer();
-const popupElement = setupPopup();
-setupSearch();
-const heightGraphPromise = setupHeightGraph();
-
-
-// --- VIEW SETTINGS ---
+// --- STARTUP ---
 const viewElement = document.querySelector<HTMLArcgisSceneElement>("arcgis-scene#viewElement")!;
 await viewElement.viewOnReady();
 viewElement.environment.lighting = {
@@ -80,32 +71,33 @@ viewElement.environment.lighting = {
 };
 const view = viewElement.view as SceneView;
 view.highlights = [{ name: "default", color: [255, 255, 0], fillOpacity: 0.4 }];
-view.map!.add(sceneLayer);
 
+const { sceneLayer, rendererGen } = setupSceneLayer();
+const popupElement = setupPopup();
+setupSearch();
 
-const heightGraph = await heightGraphPromise;
+const [heightGraph, sceneLayerView] = await Promise.all([
+  setupHeightGraph(),
+  view.whenLayerView(sceneLayer),
+  setupLabels(view, "./data/manhattan-boroughs.json")
+]);
 setupCategoryFilter();
-view.map!.add(await labelsLayerPromise);
 
-const sceneLayerView = await view.whenLayerView(sceneLayer);
 await reactiveUtils.whenOnce(() => !sceneLayerView.updating);
 document.getElementById("loading")!.style.display = "none";
 
 
-// --- HELPER FUNCTIONS ---
-
-function setupSceneLayer(): { sceneLayer: SceneLayer; rendererGen: RendererGenerator } {// --- LAYERS SETTINGS ---
-// set an initial filter to display only buildings whose height is between minHeight and maxHeight
-const filter = [settings.buildingOptions.minHeight, settings.buildingOptions.maxHeight];
-// scene layer with the buildings
-const sceneLayer = new SceneLayer({
-  url: settings.buildingsUrl,
-  outFields: ["*"],
-  definitionExpression: generateDefinitionExpression(filter)
-});
-const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
+// --- SETUP FUNCTIONS ---
+function setupSceneLayer(): { sceneLayer: SceneLayer; rendererGen: RendererGenerator } {
+  const filter = [settings.buildingOptions.minHeight, settings.buildingOptions.maxHeight];
+  const sceneLayer = new SceneLayer({
+    url: settings.buildingsUrl,
+    outFields: ["*"],
+    definitionExpression: generateDefinitionExpression(filter)
+  });
+  const rendererGen = new RendererGenerator(sceneLayer, "CNSTRCT_YR");
   rendererGen.applyClassBreaksRenderer(state.selectedPeriod, state);
-
+  view.map!.add(sceneLayer);
   return { sceneLayer, rendererGen };
 }
 
@@ -140,6 +132,12 @@ function setupPopup(): ArcgisPopup {
     
     // set up popup template for the SceneLayer
     const articleUrlByObjectId = new Map<string, string>();
+    const wikiAction = new ActionButton({
+      title: "Wikipedia",
+      id: "wiki-action",
+      icon: "article",
+      visible: false
+    });
     const buildingPopupTemplate = new PopupTemplate({
       title: "{NAME}",
       content: async (feature) => {
@@ -156,7 +154,8 @@ function setupPopup(): ArcgisPopup {
             <img src="${new URL("height.png", document.baseURI).toString()}" width="25" height="25"> ${Math.floor(attributes.HEIGHTROOF)} feet
             <img src="${new URL("construction.png", document.baseURI).toString()}" width="25" height="25"> ${attributes.CNSTRCT_YR}
           </p>`;
-    
+
+        wikiAction.visible = !!name;
         if (name) {
           const wikiResult = await getWikiContent(name, position);
           content += wikiResult.extract ?? "";
@@ -164,14 +163,10 @@ function setupPopup(): ArcgisPopup {
             articleUrlByObjectId.set(String(attributes.OBJECTID), wikiResult.articleUrl);
           }
         }
-    
+
         return content;
       },
-      actions: [new ActionButton({
-        title: "Wikipedia",
-        id: "wiki-action",
-        icon: "article"
-      })]
+      actions: [wikiAction]
     });
     
     popupElement.addEventListener("arcgisTriggerAction", (event) => {
@@ -181,17 +176,14 @@ function setupPopup(): ArcgisPopup {
         const name = getName(selectedFeature);
         if (!name) return;
         const articleUrl =
-        articleUrlByObjectId.get(String(attributes.OBJECTID)) ??
-        `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
+          articleUrlByObjectId.get(String(attributes.OBJECTID)) ??
+          `https://en.wikipedia.org/wiki/${encodeURIComponent(name)}`;
         window.open(articleUrl, "_blank");
       }
     });   
     sceneLayer.popupTemplate = buildingPopupTemplate;
     return popupElement;
 }
-
-
-// --- SEARCH SETTINGS ---
 
 function setupSearch() {
 const searchElement = document.querySelector<HTMLArcgisSearchElement>("arcgis-search")!;
@@ -208,11 +200,7 @@ searchElement.sources = new Collection([
 
 }
 
-
-// --- HEIGHT GRAPH SETTINGS ---
 async function setupHeightGraph(): Promise<HeightGraph> {
-
-
   const { minCnstrctYear, maxCnstrctYear } = settings.buildingOptions;
   const query = sceneLayer.createQuery();
   // Only buildings higher that 200 ft are plotted
@@ -244,17 +232,15 @@ async function setupHeightGraph(): Promise<HeightGraph> {
 return heightGraph;
 }
 
-
 function setupCategoryFilter() {
-const categoryCheckbox = document.querySelector<HTMLCalciteCheckboxElement>("#categoryCheckbox")!;
-categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
-  state.showOnlyAnnotated = categoryCheckbox.checked;
-  rendererGen.applyCategory(state.showOnlyAnnotated);
-  heightGraph.applyCategory(state.showOnlyAnnotated);
-});
-
+  const categoryCheckbox = document.querySelector<HTMLCalciteCheckboxElement>("#categoryCheckbox")!;
+  categoryCheckbox.addEventListener("calciteCheckboxChange", () => {
+    state.showOnlyAnnotated = categoryCheckbox.checked;
+    rendererGen.applyCategory(state.showOnlyAnnotated);
+    heightGraph.applyCategory(state.showOnlyAnnotated);
+  });
+  document.querySelector<HTMLElement>("#categoryLabel")!.hidden = false;
 }
-
 
 // A SceneLayer feature query only returns the flat 2D footprint so we need to build the 3D extent  
 const FEET_TO_METERS = 0.3048;
@@ -265,27 +251,21 @@ async function frameBuilding(objectId: number) {
   footprintQuery.returnGeometry = true;
   footprintQuery.outSpatialReference = view.spatialReference;
   const { features } = await sceneLayer.queryFeatures(footprintQuery);
-  const feature = features[0];
-  const footprint = feature?.geometry?.extent;
-  if (!footprint) {
-    return;
-  }
 
-  const ground = (feature.attributes.GROUNDELEV ?? 0) * FEET_TO_METERS;
-  const roof = (feature.attributes.HEIGHTROOF ?? 0) * FEET_TO_METERS;
+  const ground = (features[0].attributes.GROUNDELEV ?? 0) * FEET_TO_METERS;
+  const roof = (features[0].attributes.HEIGHTROOF ?? 0) * FEET_TO_METERS;
+  const target = features[0]?.geometry?.extent?.clone() ?? new Extent();
 
-  const center = footprint.center;
-  const footprintRadius = Math.max(footprint.width, footprint.height) / 2;
-  const radius = Math.max(footprintRadius * 3, roof * 0.9);
-  const target = new Extent({
-    xmin: center.x - radius,
-    xmax: center.x + radius,
-    ymin: center.y - radius,
-    ymax: center.y + radius,
-    zmin: ground,
-    zmax: ground + roof,
-    spatialReference: view.spatialReference
+  const maxFootprintSize = Math.max(target.width, target.height);
+  const expandFactor = Math.max(3, (roof * 2) / maxFootprintSize);
+  target.expand(expandFactor);
+  target.zmin = ground;
+  target.zmax = ground + roof;
+
+  await view.goTo(target, { duration: 1000 })
+  .catch(function(error) {
+    if (error.name != "AbortError") {
+      console.error(error);
+    }
   });
-
-  await view.goTo(target, { duration: 1000 });
 }

@@ -35,8 +35,10 @@ import IconSymbol3DLayer from "@arcgis/core/symbols/IconSymbol3DLayer";
 import LabelSymbol3D from "@arcgis/core/symbols/LabelSymbol3D";
 import PointSymbol3D from "@arcgis/core/symbols/PointSymbol3D";
 import TextSymbol3DLayer from "@arcgis/core/symbols/TextSymbol3DLayer";
+import SceneView from "@arcgis/core/views/SceneView";
 
-export async function setupLabels(url: string): Promise<FeatureLayer> {
+export async function setupLabels(view: SceneView, url: string): Promise<void> {
+
   const response = await request(url, {
     responseType: "json"
   });
@@ -141,5 +143,7 @@ export async function setupLabels(url: string): Promise<FeatureLayer> {
     })
   });
 
-  return labelsLayer;
+  view.map!.add(labelsLayer);
+
+  return;
 }
